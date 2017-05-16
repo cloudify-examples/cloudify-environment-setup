@@ -12,7 +12,7 @@ Provisions infrastructure and starts a Cloudify Manager.
 
 ## instructions
 
-1. Download and extract this blueprint archive, [link](https://github.com/cloudify-examples/cloudify-environment-blueprint/archive/latest.zip), to your current working directory.
+1. Download and extract this blueprint archive ([link](https://github.com/cloudify-examples/cloudify-environment-blueprint/archive/latest.zip)) to your current working directory.
 
 
 2. Install the infrastructure and insert your AWS Account Keys where indicated in the example command below. (This command must be run from the same directory in which you extracted the blueprint in the previous step.)
