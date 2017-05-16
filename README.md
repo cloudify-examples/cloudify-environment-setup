@@ -1,29 +1,24 @@
 
-# Simple Infrastructure Blueprint
+# Cloudify Environment Blueprint
+
+Provisions infrastructure and starts a Cloudify Manager.
+
 
 ## pre-requisites
 
-- Cloudify CLI (run ```pip install cloudify```)
-- AWS Account
+- [Cloudify CLI](http://docs.getcloudify.org/4.0.0/installation/from-packages/) installed on your computer.
+- [AWS Account Credentials](http://docs.aws.amazon.com/general/latest/gr/aws-sec-cred-types.html)
 
 
 ## instructions
 
-1. Create inputs file. When you cat the file it should look like this:
+1. Download and extract this blueprint archive, [link](https://github.com/cloudify-examples/cloudify-environment-blueprint/archive/latest.zip), to your current working directory.
+
+
+2. Install the infrastructure. This command must be run from the same directory in which you extracted the blueprint in the previous step.
 
 ```shell
-$ cat inputs.yaml
-aws_secret_access_key: ....
-aws_access_key_id: ....
-```
-
-_As an alternative to creating a file, you may append your credentials to the command in step 2 like this: ```-i aws_secret_access_key=... -i aws_access_key_id=...```_
-
-
-2. Install the infrastructure:
-
-```shell
-$ cfy install aws-blueprint -i inputs.yaml --task-retries=30 --task-retry-interval=5
+$ cfy install cloudify-environment-blueprint-latest/aws-blueprint.yaml -i aws_secret_access_key=[INSERT_YOUR_AWS_SECRET_KEY] -i aws_access_key_id=[INSERT_YOUR_AWS_ACCESS_KEY] --task-retries=30 --task-retry-interval=5
 ```
 
 
