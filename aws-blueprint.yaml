@@ -1,0 +1,357 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+imports:
+  - http://www.getcloudify.org/spec/cloudify/4.0/types.yaml
+  - http://getcloudify.org.s3.amazonaws.com/spec/aws-plugin/1.4.8/plugin.yaml
+
+inputs:
+
+  aws_access_key_id:
+    description: YOUR AWS ACCESS KEY ID
+
+  aws_secret_access_key:
+    description: YOUR AWS SECRET ACCESS KEY
+
+  ec2_region_name:
+    default: us-east-1
+
+  ec2_region_endpoint:
+    default: ec2.us-east-1.amazonaws.com
+
+  cloudify_ami_username:
+    default: centos
+
+  cloudify_key:
+    default: abc000
+
+  cloudify_key_file:
+    default: ~/.ssh/abc000.pem
+
+  availability_zone:
+    default: us-east-1e
+
+  default_tags:
+    default:
+      owner: hello@getcloudify.org
+
+  nat_image_id:
+    description: >
+      An AWS NAT instance AMI. Default is for region us-east-1.
+      For other regions, search Community AMIs: amzn-ami-vpc-nat-pv-2014.09.1.x86_64-ebs.
+    default: ami-224dc94a
+
+  nat_instance_type:
+    default: t1.micro
+
+  nat_instance_block_device_mapping:
+    default:
+      '/dev/sda1':
+        size: 8
+        delete_on_termination: true
+
+  cloudify_ami:
+    description: >
+      A Cloudify Manager AMI. Default is for region us-east-1.
+      For other regions, search Community AMIs: Cloudify Community 17.3.31.
+    default: ami-3b6c092d
+
+  cloudify_instance_type:
+    default: m3.large
+
+  ubuntu_trusty_ami_examples:
+    default: ami-772aa961
+
+dsl_definitions:
+  client_config: &client_config
+    aws_access_key_id: { get_input: aws_access_key_id }
+    aws_secret_access_key: { get_input: aws_secret_access_key }
+    ec2_region_name: { get_input: ec2_region_name }
+    ec2_region_endpoint: { get_input: ec2_region_endpoint }
+
+node_templates:
+
+  subnet0_nic_eip0:
+    type: cloudify.aws.nodes.ElasticIP
+    properties:
+      aws_config: *client_config
+      tags: { get_input: default_tags }
+      domain: vpc
+
+  subnet0_nic_eip1:
+    type: cloudify.aws.nodes.ElasticIP
+    properties:
+      aws_config: *client_config
+      tags: { get_input: default_tags }
+      domain: vpc
+
+  key:
+    type: cloudify.aws.nodes.KeyPair
+    properties:
+      aws_config: *client_config
+      tags: { get_input: default_tags }
+      resource_id: { get_input: cloudify_key }
+      private_key_path: { get_input: cloudify_key_file }
+
+  vpc:
+    type: cloudify.aws.nodes.VPC
+    properties:
+      aws_config: *client_config
+      cidr_block: 10.10.0.0/16
+      tags: { get_input: default_tags }
+
+  internet_gateway:
+    type: cloudify.aws.nodes.InternetGateway
+    properties:
+      aws_config: *client_config
+      tags: { get_input: default_tags }
+    relationships:
+    - type: cloudify.aws.relationships.gateway_connected_to_vpc
+      target: vpc
+
+  subnet0:
+    type: cloudify.aws.nodes.Subnet
+    properties:
+      aws_config: *client_config
+      cidr_block: 10.10.0.0/24
+      availability_zone: { get_input: availability_zone }
+      tags: { get_input: default_tags }
+    relationships:
+    - type: cloudify.aws.relationships.subnet_contained_in_vpc
+      target: vpc
+    - type: cloudify.relationships.depends_on
+      target: internet_gateway
+
+  subnet1:
+    type: cloudify.aws.nodes.Subnet
+    properties:
+      aws_config: *client_config
+      cidr_block: 10.10.1.0/24
+      availability_zone: { get_input: availability_zone }
+      tags: { get_input: default_tags }
+    relationships:
+    - type: cloudify.aws.relationships.subnet_contained_in_vpc
+      target: vpc
+    - type: cloudify.relationships.depends_on
+      target: internet_gateway
+
+  nat_instance_security_group:
+    type: cloudify.aws.nodes.SecurityGroup
+    properties:
+      aws_config: *client_config
+      tags: { get_input: default_tags }
+      description: Cloudify Community AMI NAT Security Group
+      rules:
+      - ip_protocol: -1
+        from_port: -1
+        to_port: -1
+        cidr_ip: 0.0.0.0/0
+    relationships:
+    - type: cloudify.aws.relationships.security_group_contained_in_vpc
+      target: vpc
+
+  cloudify_security_group:
+    type: cloudify.aws.nodes.SecurityGroup
+    properties:
+      aws_config: *client_config
+      tags: { get_input: default_tags }
+      description: Cloudify Community AMI Security Group
+      rules:
+      - ip_protocol: icmp
+        from_port: -1
+        to_port: -1
+        cidr_ip: 0.0.0.0/0
+      - ip_protocol: tcp
+        from_port: 22
+        to_port: 22
+        cidr_ip: 0.0.0.0/0
+      - ip_protocol: tcp
+        from_port: 80
+        to_port: 80
+        cidr_ip: 0.0.0.0/0
+      - ip_protocol: tcp
+        from_port: 443
+        to_port: 443
+        cidr_ip: 0.0.0.0/0
+      - ip_protocol: tcp
+        from_port: 5671
+        to_port: 5671
+        cidr_ip: { get_property:  [ vpc, cidr_block ] }
+      - ip_protocol: tcp
+        from_port: 8101
+        to_port: 8101
+        cidr_ip: { get_property:  [ vpc, cidr_block ] }
+      - ip_protocol: tcp
+        from_port: 53333
+        to_port: 53333
+        cidr_ip: { get_property:  [ vpc, cidr_block ] }
+      - ip_protocol: tcp
+        from_port: 8300
+        to_port: 8300
+        cidr_ip: { get_property:  [ vpc, cidr_block ] }
+      - ip_protocol: tcp
+        from_port: 8301
+        to_port: 8301
+        cidr_ip: { get_property:  [ vpc, cidr_block ] }
+      - ip_protocol: tcp
+        from_port: 8500
+        to_port: 8500
+        cidr_ip: { get_property:  [ vpc, cidr_block ] }
+      - ip_protocol: tcp
+        from_port: 22000
+        to_port: 22000
+        cidr_ip: { get_property:  [ vpc, cidr_block ] }
+      - ip_protocol: tcp
+        from_port: 15432
+        to_port: 15432
+        cidr_ip: { get_property:  [ vpc, cidr_block ] }
+    relationships:
+    - type: cloudify.aws.relationships.security_group_contained_in_vpc
+      target: vpc
+
+  subnet0_nic0:
+    type: cloudify.aws.nodes.Interface
+    properties:
+      aws_config: *client_config
+      tags: { get_input: default_tags }
+    relationships:
+      - type: cloudify.aws.relationships.connected_to_subnet
+        target: subnet0
+      - type: cloudify.aws.relationships.connected_to_elastic_ip
+        target: subnet0_nic_eip0
+      - type: cloudify.aws.relationships.connected_to_security_group
+        target: cloudify_security_group
+
+  subnet0_nic1:
+    type: cloudify.aws.nodes.Interface
+    properties:
+      aws_config: *client_config
+      tags: { get_input: default_tags }
+    relationships:
+      - type: cloudify.aws.relationships.connected_to_subnet
+        target: subnet0
+      - type: cloudify.aws.relationships.connected_to_elastic_ip
+        target: subnet0_nic_eip1
+      - type: cloudify.aws.relationships.connected_to_security_group
+        target: nat_instance_security_group
+
+  nat_instance:
+    type: cloudify.aws.nodes.Instance
+    properties:
+      aws_config: *client_config
+      tags: { get_input: default_tags }
+      name: NAT Instance
+      image_id: { get_input: nat_image_id }
+      instance_type: { get_input: nat_instance_type }
+      agent_config:
+        install_method: none
+      parameters:
+        block_device_map: { get_input: nat_instance_block_device_mapping }
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        configure:
+          implementation: aws.cloudify_aws.ec2.instance.modify_attributes
+          inputs:
+            new_attributes:
+              sourceDestCheck: false
+    relationships:
+      - type: cloudify.aws.relationships.instance_contained_in_subnet
+        target: subnet0
+      - type: cloudify.aws.relationships.instance_connected_to_eni
+        target: subnet0_nic1
+
+  route_table0:
+    type: cloudify.aws.nodes.RouteTable
+    properties:
+      aws_config: *client_config
+      tags: { get_input: default_tags }
+    relationships:
+      - type: cloudify.aws.relationships.routetable_contained_in_vpc
+        target: vpc
+      - type: cloudify.aws.relationships.routetable_associated_with_subnet
+        target: subnet0
+      - type: cloudify.aws.relationships.route_table_to_gateway
+        target: internet_gateway
+
+  route_table1:
+    type: cloudify.aws.nodes.RouteTable
+    properties:
+      aws_config: *client_config
+      tags: { get_input: default_tags }
+    relationships:
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: aws.cloudify_aws.vpc.routetable.create_route_table
+          inputs:
+            routes:
+              - destination_cidr_block: 0.0.0.0/0
+                instance_id: { get_attribute: [ nat_instance, aws_resource_id ] }
+    relationships:
+      - type: cloudify.aws.relationships.routetable_contained_in_vpc
+        target: vpc
+      - type: cloudify.aws.relationships.routetable_associated_with_subnet
+        target: subnet1
+      - type: cloudify.relationships.connected_to
+        target: nat_instance
+
+  cloudify_host:
+    type: cloudify.aws.nodes.Instance
+    properties:
+      aws_config: *client_config
+      tags: { get_input: default_tags }
+      name: Cloudify Manager
+      agent_config:
+        install_method: none
+        user: { get_input: cloudify_ami_username }
+      image_id: { get_input: cloudify_ami }
+      instance_type: { get_input: cloudify_instance_type }
+      parameters:
+        block_device_map:
+          '/dev/sda1':
+            delete_on_termination: true
+        placement: { get_input: availability_zone }
+    relationships:
+      - type: cloudify.aws.relationships.instance_connected_to_eni
+        target: subnet0_nic0
+      - type: cloudify.aws.relationships.instance_connected_to_keypair
+        target: key
+
+outputs:
+
+  ExamplesExecution:
+    value:
+      Step1-Initialize-Cloudify-Manager-CLI-Profile:
+        concat:
+          - 'cfy profiles use -s '
+          - { get_input: cloudify_ami_username }
+          - ' -k '
+          - { get_input: cloudify_key_file }
+          - ' -u admin -p admin -t default_tenant '
+          - { get_attribute: [ subnet0_nic_eip0, aws_resource_id ] }
+      Step2-Upload-AWS-Plugin-Package-Centos: 'cfy plugins upload http://repository.cloudifysource.org/cloudify/wagons/cloudify-aws-plugin/1.4.4/cloudify_aws_plugin-1.4.4-py27-none-linux_x86_64-centos-Core.wgn'
+      Step3-Upload-Diamond-Plugin-Package-Centos: 'cfy plugins upload http://repository.cloudifysource.org/cloudify/wagons/cloudify-diamond-plugin/1.3.5/cloudify_diamond_plugin-1.3.5-py27-none-linux_x86_64-centos-Core.wgn'
+      Step4-Upload-Diamond-Plugin-Package-Ubuntu: 'cfy plugins upload http://repository.cloudifysource.org/cloudify/wagons/cloudify-diamond-plugin/1.3.5/cloudify_diamond_plugin-1.3.5-py27-none-linux_x86_64-Ubuntu-trusty.wgn'
+      Step5-Create-AWS-Secrets:
+        concat:
+          - 'cfy secrets create -s '
+          - { get_input: aws_access_key_id }
+          - ' aws_access_key_id && cfy secrets create  -s '
+          - { get_input: aws_secret_access_key }
+          - ' aws_secret_access_key'
+      Step6-Execute-Nodecellar-Demo:
+        concat:
+          - 'cfy install https://github.com/cloudify-examples/nodecellar-auto-scale-auto-heal-blueprint/archive/4.0.zip -b demo -n aws-haproxy-blueprint.yaml'
+          - ' -i ec2_region_name='
+          - { get_input: ec2_region_name }
+          - ' -i ec2_region_endpoint='
+          - { get_input: ec2_region_endpoint }
+          - ' -i vpc_id='
+          - { get_attribute: [ vpc, aws_resource_id ] }
+          - ' -i public_subnet_id='
+          - { get_attribute: [ subnet0, aws_resource_id ] }
+          - ' -i private_subnet_id='
+          - { get_attribute: [ subnet1, aws_resource_id ] }
+          - ' -i availability_zone='
+          - { get_input: availability_zone }
+          - ' -i ami='
+          - { get_input: ubuntu_trusty_ami_examples }
