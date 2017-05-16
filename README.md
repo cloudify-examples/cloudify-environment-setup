@@ -12,7 +12,8 @@ Cloudify Manager is designed to work in any environment, whether cloud, baremeta
 ## pre-requisites
 
 - [Cloudify CLI](http://docs.getcloudify.org/4.0.0/installation/from-packages/) installed on your computer.
-- [AWS Account Credentials](http://docs.aws.amazon.com/general/latest/gr/aws-sec-cred-types.html)
+- Cloud account credentials:
+  - [AWS Credentials](http://docs.aws.amazon.com/general/latest/gr/aws-sec-cred-types.html)
 
 
 ## instructions
