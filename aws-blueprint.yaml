@@ -353,5 +353,7 @@ outputs:
           - { get_attribute: [ subnet1, aws_resource_id ] }
           - ' -i availability_zone='
           - { get_input: availability_zone }
+          - ' -i vpc_cidr_block='
+          - { get_property: [ vpc, cidr_block ] }
           - ' -i ami='
           - { get_input: ubuntu_trusty_ami_examples }
