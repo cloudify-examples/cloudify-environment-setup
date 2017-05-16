@@ -33,6 +33,8 @@ $ cfy deployments outputs
 
 _Note: Your example output should look like this:_
 
+_Advice: Wait a couple minutes after the installation has succeeded to run these commands._
+
 ```json
 {
   "Configure-Manager-and-Run-Example": {
@@ -45,8 +47,6 @@ _Note: Your example output should look like this:_
   }
 }
 ```
-
-_Advice: Wait a couple minutes after the installation has succeeded to run the followsteps._
 
 _Note: In rare cases, the VM will not provision correctly and you may see this response to the ```cfy profiles use...``` command:_
 
