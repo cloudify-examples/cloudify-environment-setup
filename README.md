@@ -33,6 +33,7 @@ $ cfy deployments outputs
 
 _Note: Your example output should look like this:_
 
+```json
 {
   "Configure-Manager-and-Run-Example": {
     "Step1-Initialize-Cloudify-Manager-CLI-Profile": "cfy profiles use -s centos -k ~/.ssh/cfy-manager-key.pem -u admin -p admin -t default_tenant **********",
@@ -43,3 +44,4 @@ _Note: Your example output should look like this:_
     "Step6-Execute-Nodecellar-Demo": "cfy install https://github.com/cloudify-examples/nodecellar-auto-scale-auto-heal-blueprint/archive/4.0.zip -b demo -n aws-haproxy-blueprint.yaml -i ec2_region_name=us-east-1 -i ec2_region_endpoint=ec2.us-east-1.amazonaws.com -i vpc_id=********** -i public_subnet_id=********** -i private_subnet_id=********** -i availability_zone=us-east-1e -i ami=ami-772aa961"
   }
 }
+```
