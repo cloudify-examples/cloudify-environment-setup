@@ -22,10 +22,10 @@ inputs:
     default: centos
 
   cloudify_key:
-    default: abc000
+    default: cfy-manager-key
 
   cloudify_key_file:
-    default: ~/.ssh/abc000.pem
+    default: ~/.ssh/cfy-manager-key.pem
 
   availability_zone:
     default: us-east-1e
@@ -318,7 +318,7 @@ node_templates:
 
 outputs:
 
-  ExamplesExecution:
+  Configure-Manager-and-Run-Example:
     value:
       Step1-Initialize-Cloudify-Manager-CLI-Profile:
         concat:
