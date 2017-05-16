@@ -46,6 +46,8 @@ _Note: Your example output should look like this:_
 }
 ```
 
+_Advice: Wait a couple minutes after the installation has succeeded to run the followsteps._
+
 _Note: In rare cases, the VM will not provision correctly and you may see this response to the ```cfy profiles use...``` command:_
 
 ```shell
