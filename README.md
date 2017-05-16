@@ -15,7 +15,9 @@ Provisions infrastructure and starts a Cloudify Manager.
 1. Download and extract this blueprint archive ([link](https://github.com/cloudify-examples/cloudify-environment-blueprint/archive/latest.zip)) to your current working directory.
 
 
-2. Install the infrastructure and insert your AWS Account Keys where indicated in the example command below. (This command must be run from the same directory in which you extracted the blueprint in the previous step.)
+2. Install the infrastructure and insert your AWS Account Keys where indicated in the example command below.
+
+_Note: This command should be run from the same directory in which you extracted the blueprint in the previous step._
 
 ```shell
 $ cfy install cloudify-environment-blueprint-latest/aws-blueprint.yaml \
@@ -31,9 +33,9 @@ $ cfy install cloudify-environment-blueprint-latest/aws-blueprint.yaml \
 $ cfy deployments outputs
 ```
 
-_Note: Your example output should look like this:_
-
 _Advice: Wait a couple minutes after the installation has succeeded to run these commands._
+
+_Note: Your example output should look like this:_
 
 ```json
 {
@@ -60,3 +62,18 @@ _Note: In rare cases, the VM will not provision correctly and you may see this r
 ```
 
 If that is the case, restart the VM.
+
+
+4. To uninstall the demo app, run:
+
+```shell
+$ cfy uninstall demo --allow-custom-parameters -p ignore_failure=true
+```
+
+
+5. To uninstall the example environment, run:
+
+```shell
+$ cfy profiles use local
+$ cfy uninstall --allow-custom-parameters -p ignore_failure=true --task-retries=30 --task-retry-interval=5
+```
