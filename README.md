@@ -4,6 +4,11 @@
 Provisions infrastructure and starts a Cloudify Manager.
 
 
+### purpose
+
+Cloudify Manager is designed to work in any environment, whether cloud, baremetal, or a hybrid of the two. This blueprint will deploy the reference environment that is used by other examples.
+
+
 ## pre-requisites
 
 - [Cloudify CLI](http://docs.getcloudify.org/4.0.0/installation/from-packages/) installed on your computer.
