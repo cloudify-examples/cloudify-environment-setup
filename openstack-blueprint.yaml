@@ -53,16 +53,16 @@ inputs:
     type: string
 
   large_openstack_image_flavor:
-    default: 4
+    type: string
 
   small_openstack_image_flavor:
-    default: 1
+    type: string
 
   cloudify_manager_host_username:
     default: centos
 
   ubuntu_trusty_id_examples:
-    default: e41430f7-9131-495b-927f-e7dc4b8994c8
+    type: string
 
 dsl_definitions:
   client_config: &client_config
