@@ -1,0 +1,365 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+imports:
+  - http://www.getcloudify.org/spec/cloudify/4.0/types.yaml
+  - http://www.getcloudify.org/spec/openstack-plugin/2.0.1/plugin.yaml
+
+inputs:
+
+  username:
+    description: OS_USERNAME as specified in Openstack RC file.
+
+  password:
+    description: Openstack user password.
+
+  tenant_name:
+    description: OS_TENANT_NAME as specified in Openstack RC file.
+
+  auth_url:
+    description: OS_AUTH_URL as specified in Openstack RC file.
+
+  region:
+    description: OS_REGION_NAME as specified in Openstack RC file.
+
+  external_network_name:
+    description: Openstack tenant external network name.
+
+  cloudify_key:
+    default: cfy-manager-key
+
+  cloudify_key_file:
+    default: ~/.ssh/cfy-manager-key.pem
+
+  nameservers:
+    default: [8.8.4.4, 8.8.8.8]
+
+  network0_subnet_cidr:
+    default: 192.168.120.0/24
+
+  network0_subnet_allocation_pools:
+    default:
+    - start: 192.168.120.2
+      end: 192.168.120.254
+
+  network1_subnet_cidr:
+    default: 192.168.121.0/24
+
+  network1_subnet_allocation_pools:
+    default:
+    - start: 192.168.121.2
+      end: 192.168.121.254
+
+  cloudify_image_id:
+    type: string
+
+  large_openstack_image_flavor:
+    default: 4
+
+  small_openstack_image_flavor:
+    default: 1
+
+  cloudify_manager_host_username:
+    default: centos
+
+  ubuntu_trusty_id_examples:
+    default: e41430f7-9131-495b-927f-e7dc4b8994c8
+
+dsl_definitions:
+  client_config: &client_config
+    username: { get_input: username }
+    password: { get_input: password }
+    tenant_name: { get_input: tenant_name }
+    auth_url: { get_input: auth_url }
+    region: { get_input: region }
+
+node_templates:
+
+  key:
+    type: cloudify.openstack.nodes.KeyPair
+    properties:
+      openstack_config: *client_config
+      resource_id: { get_input: cloudify_key }
+      private_key_path: { get_input: cloudify_key_file }
+
+  external_network:
+    type: cloudify.openstack.nodes.Network
+    properties:
+      openstack_config: *client_config
+      use_external_resource: true
+      resource_id: { get_input: external_network_name }
+
+  network0_subnet_port_fip:
+    type: cloudify.openstack.nodes.FloatingIP
+    properties:
+      openstack_config: *client_config
+      floatingip:
+        floating_network_name: { get_input: external_network_name }
+
+  network0:
+    type: cloudify.openstack.nodes.Network
+    properties:
+      openstack_config: *client_config
+      resource_id: network0
+
+  network1:
+    type: cloudify.openstack.nodes.Network
+    properties:
+      openstack_config: *client_config
+      resource_id: network1
+
+  network0_router:
+    type: cloudify.openstack.nodes.Router
+    properties:
+      openstack_config: *client_config
+      resource_id: network0_router
+    relationships:
+    - type: cloudify.relationships.connected_to
+      target: external_network
+
+  network0_subnet:
+    type: cloudify.openstack.nodes.Subnet
+    properties:
+      openstack_config: *client_config
+      resource_id: network0_subnet
+      subnet:
+        ip_version: 4
+        cidr: { get_input: network0_subnet_cidr }
+        dns_nameservers: { get_input: nameservers }
+        allocation_pools: { get_input: network0_subnet_allocation_pools }
+    relationships:
+    - type: cloudify.relationships.contained_in
+      target: network0
+    - type: cloudify.openstack.subnet_connected_to_router
+      target: network0_router
+
+  network1_subnet:
+    type: cloudify.openstack.nodes.Subnet
+    properties:
+      openstack_config: *client_config
+      resource_id: network1_subnet
+      subnet:
+        ip_version: 4
+        cidr: { get_input: network1_subnet_cidr }
+        dns_nameservers: { get_input: nameservers }
+        allocation_pools: { get_input: network1_subnet_allocation_pools }
+    relationships:
+    - type: cloudify.relationships.contained_in
+      target: network1
+    - type: cloudify.openstack.subnet_connected_to_router
+      target: network0_router
+
+  cloudify_security_group:
+    type: cloudify.openstack.nodes.SecurityGroup
+    properties:
+      openstack_config: *client_config
+      resource_id: cloudify_security_group
+      rules:
+      - remote_ip_prefix: 0.0.0.0/0
+        port_range_min: null
+        port_range_max: null
+        protocol: icmp
+      - remote_ip_prefix: 0.0.0.0/0
+        port_range_min: 22
+        port_range_max: 22
+        protocol: tcp
+      - remote_ip_prefix: 0.0.0.0/0
+        port_range_min: 80
+        port_range_max: 80
+        protocol: tcp
+      - remote_ip_prefix: 0.0.0.0/0
+        port_range_min: 443
+        port_range_max: 443
+        protocol: tcp
+      - remote_ip_prefix: { get_property: [ network0_subnet, subnet, cidr ] }
+        port_range_min: 5671
+        port_range_max: 5671
+        protocol: tcp
+      - remote_ip_prefix: { get_property: [ network1_subnet, subnet, cidr ] }
+        port_range_min: 5671
+        port_range_max: 5671
+        protocol: tcp
+      - remote_ip_prefix: { get_property: [ network0_subnet, subnet, cidr ] }
+        port_range_min: 8101
+        port_range_max: 8101
+        protocol: tcp
+      - remote_ip_prefix: { get_property: [ network1_subnet, subnet, cidr ] }
+        port_range_min: 8101
+        port_range_max: 8101
+        protocol: tcp
+      - remote_ip_prefix: { get_property: [ network0_subnet, subnet, cidr ] }
+        port_range_min: 53333
+        port_range_max: 53333
+        protocol: tcp
+      - remote_ip_prefix: { get_property: [ network1_subnet, subnet, cidr ] }
+        port_range_min: 53333
+        port_range_max: 53333
+        protocol: tcp
+      - remote_ip_prefix: { get_property: [ network0_subnet, subnet, cidr ] }
+        port_range_min: 8300
+        port_range_max: 8301
+        protocol: tcp
+      - remote_ip_prefix: { get_property: [ network1_subnet, subnet, cidr ] }
+        port_range_min: 8300
+        port_range_max: 8301
+        protocol: tcp
+      - remote_ip_prefix: { get_property: [ network0_subnet, subnet, cidr ] }
+        port_range_min: 8500
+        port_range_max: 8500
+        protocol: tcp
+      - remote_ip_prefix: { get_property: [ network1_subnet, subnet, cidr ] }
+        port_range_min: 8500
+        port_range_max: 8500
+        protocol: tcp
+      - remote_ip_prefix: { get_property: [ network0_subnet, subnet, cidr ] }
+        port_range_min: 22000
+        port_range_max: 22000
+        protocol: tcp
+      - remote_ip_prefix: { get_property: [ network1_subnet, subnet, cidr ] }
+        port_range_min: 22000
+        port_range_max: 22000
+        protocol: tcp
+      - remote_ip_prefix: { get_property: [ network0_subnet, subnet, cidr ] }
+        port_range_min: 15432
+        port_range_max: 15432
+        protocol: tcp
+      - remote_ip_prefix: { get_property: [ network1_subnet, subnet, cidr ] }
+        port_range_min: 15432
+        port_range_max: 15432
+        protocol: tcp
+
+  network0_subnet_port:
+    type: cloudify.openstack.nodes.Port
+    properties:
+      openstack_config: *client_config
+      resource_id: network0_subnet_port
+    relationships:
+    - type: cloudify.relationships.contained_in
+      target: network0
+    - type: cloudify.relationships.depends_on
+      target: network0_subnet
+    - type: cloudify.openstack.port_connected_to_security_group
+      target: cloudify_security_group
+    - type: cloudify.openstack.port_connected_to_floating_ip
+      target: network0_subnet_port_fip
+
+  network1_subnet_port:
+    type: cloudify.openstack.nodes.Port
+    properties:
+      openstack_config: *client_config
+      resource_id: network0_subnet_port
+    relationships:
+    - type: cloudify.relationships.contained_in
+      target: network1
+    - type: cloudify.relationships.depends_on
+      target: network1_subnet
+    - type: cloudify.openstack.port_connected_to_security_group
+      target: cloudify_security_group
+
+  cloudify_host:
+    type: cloudify.openstack.nodes.Server
+    properties:
+      openstack_config: *client_config
+      agent_config:
+        install_method: none
+      server:
+        image: { get_input: cloudify_image_id }
+        flavor: { get_input: large_openstack_image_flavor }
+      management_network_name: { get_property: [ network1, resource_id ] }
+    relationships:
+    - type: cloudify.openstack.server_connected_to_keypair
+      target: key
+    - type: cloudify.openstack.server_connected_to_port
+      target: network0_subnet_port
+    - type: cloudify.openstack.server_connected_to_port
+      target: network1_subnet_port
+
+outputs:
+
+  Configure-Manager-and-Run-Example:
+    value:
+      Step0a-Upload-Key:
+        concat:
+        - 'cat '
+        - { get_input: cloudify_key_file  }
+        - ' | '
+        - 'ssh -i '
+        - { get_input: cloudify_key_file  }
+        - ' '
+        - { get_input: cloudify_manager_host_username }
+        - '@'
+        - { get_attribute: [ network0_subnet_port_fip, floating_ip_address ] }
+        - ' '''
+        - 'cat >> ~/.ssh/key.pem && chmod 600 ~/.ssh/key.pem'
+        - ''''
+      Step0b-Install-Cloudify-CLI:
+        concat:
+        - 'ssh -t -i '
+        - { get_input: cloudify_key_file  }
+        - ' '
+        - { get_input: cloudify_manager_host_username }
+        - '@'
+        - { get_attribute: [ network0_subnet_port_fip, floating_ip_address ] }
+        - ' '''
+        - 'sudo rpm -i http://repository.cloudifysource.org/cloudify/4.0.1/sp-release/cloudify-4.0.1~sp.el6.x86_64.rpm'
+        - ''''
+      Step0c-Install-Cloudify-Manager:
+        concat:
+        - 'ssh -i '
+        - { get_input: cloudify_key_file  }
+        - ' '
+        - { get_input: cloudify_manager_host_username }
+        - '@'
+        - { get_attribute: [ network0_subnet_port_fip, floating_ip_address ] }
+        - ' '''
+        - 'cfy bootstrap --install-plugins /opt/cfy/cloudify-manager-blueprints/simple-manager-blueprint.yaml -i public_ip='
+        - { get_attribute: [ network0_subnet_port_fip, floating_ip_address ] }
+        - ' -i private_ip='
+        - { get_attribute: [ network0_subnet_port, fixed_ip_address ] }
+        - ' -i ssh_user='
+        - { get_input: cloudify_manager_host_username }
+        - ' -i ssh_key_filename=~/.ssh/key.pem'
+        - ' -i agents_user=ubuntu -i ignore_bootstrap_validations=false -i admin_username=admin -i admin_password=admin'
+        - ''''
+      Step1-Initialize-Cloudify-Manager-CLI-Profile:
+        concat:
+          - 'cfy profiles use -s '
+          - { get_input: cloudify_manager_host_username }
+          - ' -k '
+          - { get_input: cloudify_key_file }
+          - ' -u admin -p admin -t default_tenant '
+          - { get_attribute: [ network0_subnet_port_fip, floating_ip_address ] }
+      Step2-Upload-Openstack-Plugin-Package-Centos: 'cfy plugins upload http://repository.cloudifysource.org/cloudify/wagons/cloudify-openstack-plugin/2.0.1/cloudify_openstack_plugin-2.0.1-py27-none-linux_x86_64-centos-Core.wgn'
+      Step3-Upload-Diamond-Plugin-Package-Centos: 'cfy plugins upload http://repository.cloudifysource.org/cloudify/wagons/cloudify-diamond-plugin/1.3.5/cloudify_diamond_plugin-1.3.5-py27-none-linux_x86_64-centos-Core.wgn'
+      Step4-Upload-Diamond-Plugin-Package-Ubuntu: 'cfy plugins upload http://repository.cloudifysource.org/cloudify/wagons/cloudify-diamond-plugin/1.3.5/cloudify_diamond_plugin-1.3.5-py27-none-linux_x86_64-Ubuntu-trusty.wgn'
+      Step5-Create-Openstack-Secrets:
+        concat:
+          - 'cfy secrets create -s '
+          - { get_input: username }
+          - ' keystone_username && cfy secrets create  -s '
+          - { get_input: password }
+          - ' keystone_password && cfy secrets create  -s '
+          - { get_input: tenant_name }
+          - ' keystone_tenant_name && cfy secrets create  -s '
+          - { get_input: auth_url }
+          - ' keystone_url'
+      Step6-Execute-Nodecellar-Demo:
+        concat:
+          - 'cfy install https://github.com/cloudify-examples/nodecellar-auto-scale-auto-heal-blueprint/archive/4.0.zip -b demo -n openstack-haproxy-blueprint.yaml'
+          - ' -i region='
+          - { get_input: region }
+          - ' -i external_network_name='
+          - { get_property: [ external_network, resource_id ] }
+          - ' -i router_name='
+          - { get_property: [ network0_router, resource_id ] }
+          - ' -i public_network_name='
+          - { get_property: [ network0, resource_id ] }
+          - ' -i private_network_name='
+          - { get_property: [ network1, resource_id ] }
+          - ' -i public_subnet_name='
+          - { get_property: [ network0_subnet, resource_id ] }
+          - ' -i private_subnet_name='
+          - { get_property: [ network1_subnet, resource_id ] }
+          - ' -i image='
+          - { get_input: ubuntu_trusty_id_examples }
+          - ' -i flavor='
+          - { get_input: small_openstack_image_flavor }
