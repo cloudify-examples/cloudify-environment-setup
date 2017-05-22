@@ -21,7 +21,7 @@ Cloudify Manager is designed to work in any environment, whether cloud, baremeta
 
 Decide how you want to install your manager. There are two options:
 
-* Executing bootstrap (installing Cloudify to install manager components. If you want to bootstrap, continue to the instructions for your cloud. After you deploy your cloud environment, you will find additional steps (Step0a, Step0b, and Step0c) in the deployment outputs.
+* Executing bootstrap (using Cloudify locally to install manager components). If you want to bootstrap, continue to the instructions for your cloud. After you deploy your cloud environment, you will find additional steps (Step0a, Step0b, and Step0c) in the deployment outputs.
   - [AWS](#aws-instructions)
   - [Openstack](#openstack-instructions)
 
