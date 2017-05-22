@@ -85,6 +85,8 @@ If that is the case, restart the Manager VM.
 
 # openstack instructions
 
+1. Download and extract this blueprint archive ([link](https://github.com/cloudify-examples/cloudify-environment-blueprint/archive/latest.zip)) to your current working directory.
+
 2. Install the infrastructure and insert your Openstack credentials where indicated in the example command below.
 
 _Note: This command should be run from the same directory in which you extracted the blueprint in the previous step._
