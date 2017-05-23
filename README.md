@@ -133,6 +133,48 @@ _Note: Your example output should look like this:_
 }
 ```
 
+
+# azure instructions
+
+1. Download and extract this blueprint archive ([link](https://github.com/cloudify-examples/cloudify-environment-blueprint/archive/latest.zip)) to your current working directory.
+
+2. Install the infrastructure and insert your Azure credentials where indicated in the example command below.
+
+_Note: This command should be run from the same directory in which you extracted the blueprint in the previous step._
+
+```shell
+$ cfy install simple-infrastructure-blueprint/azure-blueprint.yaml \
+    -i credentials/simple-infrastructure-blueprint/azure.yaml \
+    --task-retries=30 --task-retry-interval=5
+```
+
+
+3. Show the outputs, and follow the instructions to configure your manager and run the demo application.
+
+```shell
+$ cfy deployments outputs
+```
+
+_Advice: Wait a couple minutes after the installation has succeeded to run these commands._
+
+_Note: Your example output should look like this:_
+
+```json
+{
+  "Configure-Manager-and-Run-Example": {
+    "Step0a-Upload-Key": "cat ~/.ssh/cfy-manager-key | ssh -i ~/.ssh/cfy-manager-key cfyuser@***.***.***.*** 'cat >> ~/.ssh/key.pem && chmod 600 ~/.ssh/key.pem'",
+    "Step0b-Install-Cloudify-CLI": "ssh -t -i ~/.ssh/cfy-manager-key cfyuser@***.***.***.*** 'sudo rpm -i http://repository.cloudifysource.org/cloudify/4.0.1/sp-release/cloudify-4.0.1~sp.el6.x86_64.rpm'",
+    "Step0c-Install-Cloudify-Manager": "ssh -i ~/.ssh/cfy-manager-key cfyuser@***.***.***.*** 'cfy bootstrap --install-plugins /opt/cfy/cloudify-manager-blueprints/simple-manager-blueprint.yaml -i public_ip=40.71.173.208 -i private_ip=10.10.0.4 -i ssh_user=cfyuser -i ssh_key_filename=~/.ssh/key.pem -i agents_user=ubuntu -i ignore_bootstrap_validations=false -i admin_username=admin -i admin_password=admin'",
+    "Step1-Initialize-Cloudify-Manager-CLI-Profile": "cfy profiles use -s cfyuser -k ~/.ssh/cfy-manager-key -u admin -p admin -t default_tenant ***.***.***.***",
+    "Step2-Upload-Azure-Plugin-Package-Centos": "cfy plugins upload http://repository.cloudifysource.org/cloudify/wagons/cloudify-azure-plugin/1.4.1/cloudify_azure_plugin-1.4.1-py27-none-linux_x86_64-centos-Core.wgn",
+    "Step3-Upload-Diamond-Plugin-Package-Centos": "cfy plugins upload http://repository.cloudifysource.org/cloudify/wagons/cloudify-diamond-plugin/1.3.5/cloudify_diamond_plugin-1.3.5-py27-none-linux_x86_64-centos-Core.wgn",
+    "Step4-Upload-Diamond-Plugin-Package-Ubuntu": "cfy plugins upload http://repository.cloudifysource.org/cloudify/wagons/cloudify-diamond-plugin/1.3.5/cloudify_diamond_plugin-1.3.5-py27-none-linux_x86_64-Ubuntu-trusty.wgn",
+    "Step5-Create-Azure-Secrets": "cfy secrets create -s ***************** subscription_id && cfy secrets create  -s ***************** tenant_id && cfy secrets create  -s ***************** client_id && cfy secrets create  -s ***************** client_secret",
+    "Step6-Execute-Nodecellar-Demo": "cfy install https://github.com/cloudify-examples/nodecellar-auto-scale-auto-heal-blueprint/archive/4.0.zip -b demo -n azure-haproxy-blueprint.yaml -i location=eastus -i mgr_resource_group_name=******* -i mgr_virtual_network_name=******* -i mgr_subnet_name=******* -i vm_os_username_public_key_data='************' -i cloudify_manager_agent_key_path=/home/cfyuser/.ssh/key.pem"
+  }
+}
+```
+
 # uninstall instructions
 
 1. To uninstall the demo app, run:
