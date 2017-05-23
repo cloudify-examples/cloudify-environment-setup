@@ -31,6 +31,7 @@ Decide how you want to install your manager. There are two options:
 * Using a pre-bootstrapped image. You will find a list of pre-bootstrapped images on [Cloudify's Downloads page](http://cloudify.co/downloads/get_cloudify.html).
   - The current AWS AMIs are listed [here](http://cloudify.co/thank_you_aws_ent) by region.
   - Follow [these instructions](https://docs.openstack.org/user-guide/dashboard-manage-images.html) to upload the [Openstack QCOW image](http://cloudify.co/downloads/get_cloudify.html) to Openstack.
+  - There is not currently a pre-bootstrapped image for Azure, so bootstrap is the only option.
 
 
 # aws instructions
