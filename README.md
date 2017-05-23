@@ -1,7 +1,7 @@
 
-# Cloudify Environment Blueprint
+# Cloudify Environment Setup
 
-Provisions infrastructure and starts a Cloudify Manager.
+Blueprints that provision infrastructure and start a Cloudify Manager.
 
 
 ### purpose
