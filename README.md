@@ -14,6 +14,7 @@ Cloudify Manager is designed to work in any environment, whether cloud, baremeta
 - IaaS Cloud provider and API credentials and sufficient permissions to provision network and compute resources:
   - [AWS Credentials](http://docs.aws.amazon.com/general/latest/gr/aws-sec-cred-types.html)
   - [Openstack Credentials](https://docs.openstack.org/user-guide/common/cli-set-environment-variables-using-openstack-rc.html) - *skip step 5 in those instructions -- do not "source" the file*.
+  - [Azure Credentials](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-manager-api-authentication)
 - [Cloudify CLI](http://docs.getcloudify.org/4.0.0/installation/from-packages/) installed on your computer.
 
 
@@ -24,6 +25,8 @@ Decide how you want to install your manager. There are two options:
 * Executing bootstrap (using Cloudify locally to install manager components). If you want to bootstrap, continue to the instructions for your cloud. After you deploy your cloud environment, you will find additional steps (Step0a, Step0b, and Step0c) in the deployment outputs.
   - [AWS](#aws-instructions)
   - [Openstack](#openstack-instructions)
+  - [Azure](#azure-instructions)
+
 
 * Using a pre-bootstrapped image. You will find a list of pre-bootstrapped images on [Cloudify's Downloads page](http://cloudify.co/downloads/get_cloudify.html).
   - The current AWS AMIs are listed [here](http://cloudify.co/thank_you_aws_ent) by region.
