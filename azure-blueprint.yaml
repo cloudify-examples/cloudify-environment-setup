@@ -1,0 +1,365 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+imports:
+  - http://www.getcloudify.org/spec/cloudify/4.0/types.yaml
+  - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-azure-plugin/1.4.3/plugin.yaml
+  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.2.1/plugin.yaml
+
+inputs:
+
+  subscription_id:
+    type: string
+
+  tenant_id:
+    type: string
+
+  client_id:
+    type: string
+
+  client_secret:
+    type: string
+
+  location:
+    default: eastus
+
+  retry_after:
+    default: 5
+
+  resource_prefix:
+    default: cfy
+
+  resource_suffix:
+    default: 0
+
+  cloudify_manager_host_username:
+    default: cfyuser
+
+  cloudify_host_storage_profile:
+    default:
+      imageReference:
+        publisher: OpenLogic
+        offer: CentOS
+        sku: '7.3'
+        version: latest
+
+  public_key_name:
+    type: string
+    default: cfy-manager-key
+
+dsl_definitions:
+
+  azure_configuration: &client_config
+    subscription_id: { get_input: subscription_id }
+    tenant_id: { get_input: tenant_id }
+    client_id: { get_input: client_id }
+    client_secret: { get_input: client_secret }
+
+node_templates:
+
+  key:
+    type: cloudify.keys.nodes.RSAKey
+    properties:
+      resource_config:
+        public_key_path: { concat: [ '~/.ssh/', { get_input: public_key_name }, '.pem' ] }
+        private_key_path: { concat: [ '~/.ssh/', { get_input: public_key_name } ] }
+        openssh_format: true
+      use_secret_store: false
+      key_name: azure
+
+  resource_group:
+    type: cloudify.azure.nodes.ResourceGroup
+    properties:
+      azure_config: *client_config
+      name: { concat: [ { get_input: resource_prefix }, 'rg', { get_input: resource_suffix } ] }
+      location: { get_input: location }
+
+  storage_account:
+    type: cloudify.azure.nodes.storage.StorageAccount
+    properties:
+      azure_config: *client_config
+      name: { concat: [ { get_input: resource_prefix }, 'sa', { get_input: resource_suffix } ] }
+      location: { get_input: location }
+      resource_config:
+        accountType: Standard_LRS
+    relationships:
+      - type: cloudify.azure.relationships.contained_in_resource_group
+        target: resource_group
+
+  availability_set:
+    type: cloudify.azure.nodes.compute.AvailabilitySet
+    properties:
+      azure_config: *client_config
+      name: { concat: [ { get_input: resource_prefix }, 'as', { get_input: resource_suffix } ] }
+      location: { get_input: location }
+    relationships:
+    - type: cloudify.azure.relationships.contained_in_resource_group
+      target: resource_group
+
+  subnet0_nic_ip:
+    type: cloudify.azure.nodes.network.PublicIPAddress
+    properties:
+      azure_config: *client_config
+      name: { concat: [ { get_input: resource_prefix }, 's0ip', { get_input: resource_suffix } ] }
+      location: { get_input: location }
+      retry_after: { get_input: retry_after }
+      resource_config:
+        publicIPAllocationMethod: Static
+    relationships:
+      - type: cloudify.azure.relationships.contained_in_resource_group
+        target: resource_group
+
+  virtual_network:
+    type: cloudify.azure.nodes.network.VirtualNetwork
+    properties:
+      azure_config: *client_config
+      name: { concat: [ { get_input: resource_prefix }, 'vn', { get_input: resource_suffix } ] }
+      location: { get_input: location }
+      retry_after: { get_input: retry_after }
+    relationships:
+      - type: cloudify.azure.relationships.contained_in_resource_group
+        target: resource_group
+
+  security_group:
+    type: cloudify.azure.nodes.network.NetworkSecurityGroup
+    properties:
+      azure_config: *client_config
+      name: { concat: [ { get_input: resource_prefix }, 'sg', { get_input: resource_suffix } ] }
+      location: { get_input: location }
+      retry_after: { get_input: retry_after }
+      resource_config:
+        securityRules:
+        - name: all_tcp
+          properties:
+            description: All TCP
+            protocol: Tcp
+            sourcePortRange: '*'
+            destinationPortRange: '*'
+            sourceAddressPrefix: '*'
+            destinationAddressPrefix: '*'
+            priority: 100
+            access: Allow
+            direction: Inbound
+    relationships:
+      - type: cloudify.azure.relationships.contained_in_resource_group
+        target: resource_group
+
+  subnet0:
+    type: cloudify.azure.nodes.network.Subnet
+    properties:
+      azure_config: *client_config
+      name: { concat: [ { get_input: resource_prefix }, 's0', { get_input: resource_suffix } ] }
+      location: { get_input: location }
+      retry_after: { get_input: retry_after }
+      resource_config:
+        addressPrefix: 10.10.0.0/24
+    relationships:
+    - type: cloudify.azure.relationships.contained_in_virtual_network
+      target: virtual_network
+
+  subnet1:
+    type: cloudify.azure.nodes.network.Subnet
+    properties:
+      azure_config: *client_config
+      name: { concat: [ { get_input: resource_prefix }, 's1', { get_input: resource_suffix } ] }
+      location: { get_input: location }
+      retry_after: { get_input: retry_after }
+      resource_config:
+        addressPrefix: 10.10.1.0/24
+    relationships:
+    - type: cloudify.azure.relationships.contained_in_virtual_network
+      target: virtual_network
+    - type: cloudify.relationships.depends_on
+      target: subnet0
+
+  subnet0_nic_ip_configuration:
+    type: cloudify.azure.nodes.network.IPConfiguration
+    properties:
+      azure_config: *client_config
+      name: { concat: [ { get_input: resource_prefix }, 's0ipc', { get_input: resource_suffix } ] }
+      location: { get_input: location }
+      retry_after: { get_input: retry_after }
+      resource_config:
+        privateIPAllocationMethod: Dynamic
+    relationships:
+      - type: cloudify.azure.relationships.contained_in_resource_group
+        target: resource_group
+      - type: cloudify.azure.relationships.ip_configuration_connected_to_subnet
+        target: subnet0
+      - type: cloudify.azure.relationships.ip_configuration_connected_to_public_ip
+        target: subnet0_nic_ip
+
+  subnet1_nic_ip_configuration:
+    type: cloudify.azure.nodes.network.IPConfiguration
+    properties:
+      azure_config: *client_config
+      name: { concat: [ { get_input: resource_prefix }, 's1ipc', { get_input: resource_suffix } ] }
+      location: { get_input: location }
+      retry_after: { get_input: retry_after }
+      resource_config:
+        privateIPAllocationMethod: Dynamic
+    relationships:
+      - type: cloudify.azure.relationships.contained_in_resource_group
+        target: resource_group
+      - type: cloudify.azure.relationships.ip_configuration_connected_to_subnet
+        target: subnet1
+
+  subnet0_nic:
+    type: cloudify.azure.nodes.network.NetworkInterfaceCard
+    properties:
+      azure_config: *client_config
+      name: { concat: [ { get_input: resource_prefix }, 's0nic', { get_input: resource_suffix } ] }
+      location: { get_input: location }
+      retry_after: { get_input: retry_after }
+      primary: true
+    relationships:
+      - type: cloudify.azure.relationships.nic_connected_to_ip_configuration
+        target: subnet0_nic_ip_configuration
+      - type: cloudify.azure.relationships.contained_in_resource_group
+        target: resource_group
+      - type: cloudify.azure.relationships.nic_connected_to_network_security_group
+        target: security_group
+
+  subnet1_nic:
+    type: cloudify.azure.nodes.network.NetworkInterfaceCard
+    properties:
+      azure_config: *client_config
+      name: { concat: [ { get_input: resource_prefix }, 's1nic', { get_input: resource_suffix } ] }
+      location: { get_input: location }
+      retry_after: { get_input: retry_after }
+      primary: false
+    relationships:
+      - type: cloudify.azure.relationships.nic_connected_to_ip_configuration
+        target: subnet1_nic_ip_configuration
+      - type: cloudify.azure.relationships.contained_in_resource_group
+        target: resource_group
+      - type: cloudify.azure.relationships.nic_connected_to_network_security_group
+        target: security_group
+
+  cloudify_host:
+    type: cloudify.azure.nodes.compute.VirtualMachine
+    properties:
+      azure_config: *client_config
+      name: { concat: [ { get_input: resource_prefix }, 'cfy', { get_input: resource_suffix } ] }
+      location: { get_input: location }
+      os_family: linux
+      resource_config:
+        hardwareProfile: {}
+        storageProfile: {}
+        osProfile: {}
+      agent_config:
+        install_method: none
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: pkg.cloudify_azure.resources.compute.virtualmachine.create
+          inputs:
+            args:
+              hardwareProfile:
+                vmSize: Standard_A4
+              storageProfile: { get_input: cloudify_host_storage_profile }
+              osProfile:
+                computerName: { get_property: [SELF, name] }
+                adminUsername: { get_input: cloudify_manager_host_username }
+                adminPassword: ''
+                linuxConfiguration:
+                  ssh:
+                    publicKeys:
+                    - keydata: { get_attribute: [ key, public_key_export ] }
+                      path: { concat: [ '/home/', { get_input: cloudify_manager_host_username }, '/.ssh/authorized_keys' ] }
+                  disablePasswordAuthentication: true
+    relationships:
+      - type: cloudify.azure.relationships.contained_in_resource_group
+        target: resource_group
+      - type: cloudify.azure.relationships.connected_to_storage_account
+        target: storage_account
+      - type: cloudify.azure.relationships.connected_to_nic
+        target: subnet0_nic
+      - type: cloudify.azure.relationships.connected_to_nic
+        target: subnet1_nic
+
+outputs:
+
+  Configure-Manager-and-Run-Example:
+    value:
+      Step0a-Upload-Key:
+        concat:
+        - 'cat '
+        - { concat: [ '~/.ssh/', { get_input: public_key_name } ] }
+        - ' | '
+        - 'ssh -i '
+        - { concat: [ '~/.ssh/', { get_input: public_key_name } ] }
+        - ' '
+        - { get_input: cloudify_manager_host_username }
+        - '@'
+        - { get_attribute: [ cloudify_host, public_ip ] }
+        - ' '''
+        - 'cat >> ~/.ssh/key.pem && chmod 600 ~/.ssh/key.pem'
+        - ''''
+      Step0b-Install-Cloudify-CLI:
+        concat:
+        - 'ssh -t -i '
+        - { concat: [ '~/.ssh/', { get_input: public_key_name } ] }
+        - ' '
+        - { get_input: cloudify_manager_host_username }
+        - '@'
+        - { get_attribute: [ cloudify_host, public_ip ] }
+        - ' '''
+        - 'sudo rpm -i http://repository.cloudifysource.org/cloudify/4.0.1/sp-release/cloudify-4.0.1~sp.el6.x86_64.rpm'
+        - ''''
+      Step0c-Install-Cloudify-Manager:
+        concat:
+        - 'ssh -i '
+        - { concat: [ '~/.ssh/', { get_input: public_key_name } ] }
+        - ' '
+        - { get_input: cloudify_manager_host_username }
+        - '@'
+        - { get_attribute: [ cloudify_host, public_ip ] }
+        - ' '''
+        - 'cfy bootstrap --install-plugins /opt/cfy/cloudify-manager-blueprints/simple-manager-blueprint.yaml -i public_ip='
+        - { get_attribute: [ cloudify_host, public_ip ] }
+        - ' -i private_ip='
+        - { get_attribute: [ cloudify_host, ip ] }
+        - ' -i ssh_user='
+        - { get_input: cloudify_manager_host_username }
+        - ' -i ssh_key_filename=~/.ssh/key.pem'
+        - ' -i agents_user=ubuntu -i ignore_bootstrap_validations=false -i admin_username=admin -i admin_password=admin'
+        - ''''
+      Step1-Initialize-Cloudify-Manager-CLI-Profile:
+        concat:
+          - 'cfy profiles use -s '
+          - { get_input: cloudify_manager_host_username }
+          - ' -k '
+          - { concat: [ '~/.ssh/', { get_input: public_key_name } ] }
+          - ' -u admin -p admin -t default_tenant '
+          - { get_attribute: [ cloudify_host, public_ip ] }
+      Step2-Upload-Azure-Plugin-Package-Centos: 'cfy plugins upload http://repository.cloudifysource.org/cloudify/wagons/cloudify-azure-plugin/1.4.1/cloudify_azure_plugin-1.4.1-py27-none-linux_x86_64-centos-Core.wgn'
+      Step3-Upload-Diamond-Plugin-Package-Centos: 'cfy plugins upload http://repository.cloudifysource.org/cloudify/wagons/cloudify-diamond-plugin/1.3.5/cloudify_diamond_plugin-1.3.5-py27-none-linux_x86_64-centos-Core.wgn'
+      Step4-Upload-Diamond-Plugin-Package-Ubuntu: 'cfy plugins upload http://repository.cloudifysource.org/cloudify/wagons/cloudify-diamond-plugin/1.3.5/cloudify_diamond_plugin-1.3.5-py27-none-linux_x86_64-Ubuntu-trusty.wgn'
+      Step5-Create-Azure-Secrets:
+        concat:
+          - 'cfy secrets create -s '
+          - { get_input: subscription_id }
+          - ' subscription_id && cfy secrets create  -s '
+          - { get_input: tenant_id }
+          - ' tenant_id && cfy secrets create  -s '
+          - { get_input: client_id }
+          - ' client_id && cfy secrets create  -s '
+          - { get_input: client_secret }
+          - ' client_secret'
+      Step6-Execute-Nodecellar-Demo:
+        concat:
+          - 'cfy install https://github.com/cloudify-examples/nodecellar-auto-scale-auto-heal-blueprint/archive/4.0.zip -b demo -n azure-haproxy-blueprint.yaml'
+          - ' -i location='
+          - { get_input: location }
+          - ' -i mgr_resource_group_name='
+          - { get_attribute: [ resource_group, name ] }
+          - ' -i mgr_virtual_network_name='
+          - { get_attribute: [ virtual_network, name ] }
+          - ' -i mgr_subnet_name='
+          - { get_attribute: [ subnet0, name ] }
+          - ' -i vm_os_username_public_key_data='
+          - ''''
+          - { get_attribute: [ key, public_key_export ] }
+          - ''''
+          - ' -i cloudify_manager_agent_key_path='
+          - { concat: [ '/home/', { get_input: cloudify_manager_host_username },'/.ssh/key.pem' ] }
