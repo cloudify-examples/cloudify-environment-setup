@@ -341,25 +341,19 @@ outputs:
           - { get_input: tenant_name }
           - ' keystone_tenant_name && cfy secrets create  -s '
           - { get_input: auth_url }
-          - ' keystone_url'
-      Step6-Execute-Nodecellar-Demo:
-        concat:
-          - 'cfy install https://github.com/cloudify-examples/nodecellar-auto-scale-auto-heal-blueprint/archive/4.0.zip -b demo -n openstack-haproxy-blueprint.yaml'
-          - ' -i region='
+          - ' keystone_url && cfy secrets create  -s '
           - { get_input: region }
-          - ' -i external_network_name='
+          - ' region && cfy secrets create  -s '
           - { get_property: [ external_network, resource_id ] }
-          - ' -i router_name='
+          - ' external_network_name && cfy secrets create  -s '
           - { get_property: [ network0_router, resource_id ] }
-          - ' -i public_network_name='
+          - ' router_name && cfy secrets create  -s '
           - { get_property: [ network0, resource_id ] }
-          - ' -i private_network_name='
+          - ' public_network_name && cfy secrets create  -s '
           - { get_property: [ network1, resource_id ] }
-          - ' -i public_subnet_name='
+          - ' private_network_name && cfy secrets create  -s '
           - { get_property: [ network0_subnet, resource_id ] }
-          - ' -i private_subnet_name='
+          - ' public_subnet_name && cfy secrets create  -s '
           - { get_property: [ network1_subnet, resource_id ] }
-          - ' -i image='
-          - { get_input: ubuntu_trusty_id_examples }
-          - ' -i flavor='
-          - { get_input: small_openstack_image_flavor }
+          - ' private_subnet_name'
+      Step6-Execute-Nodecellar-Demo: 'cfy install https://github.com/cloudify-examples/nodecellar-auto-scale-auto-heal-blueprint/archive/4.0.zip -b demo -n openstack-haproxy-blueprint.yaml'

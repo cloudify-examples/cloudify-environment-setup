@@ -1,8 +1,8 @@
 tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
-  - http://www.getcloudify.org/spec/cloudify/4.0/types.yaml
-  - http://getcloudify.org.s3.amazonaws.com/spec/aws-plugin/1.4.8/plugin.yaml
+  - http://www.getcloudify.org/spec/cloudify/4.0.1/types.yaml
+  - http://getcloudify.org.s3.amazonaws.com/spec/aws-plugin/1.4.9/plugin.yaml
 
 inputs:
 
@@ -61,7 +61,7 @@ inputs:
   cloudify_instance_type:
     default: m3.large
 
-  ubuntu_trusty_ami_examples:
+  ubuntu_trusty_ami:
     default: ami-772aa961
 
 dsl_definitions:
@@ -374,7 +374,7 @@ outputs:
           - { get_input: cloudify_key_file }
           - ' -u admin -p admin -t default_tenant '
           - { get_attribute: [ subnet0_nic_eip0, aws_resource_id ] }
-      Step2-Upload-AWS-Plugin-Package-Centos: 'cfy plugins upload http://repository.cloudifysource.org/cloudify/wagons/cloudify-aws-plugin/1.4.4/cloudify_aws_plugin-1.4.4-py27-none-linux_x86_64-centos-Core.wgn'
+      Step2-Upload-AWS-Plugin-Package-Centos: 'cfy plugins upload http://repository.cloudifysource.org/cloudify/wagons/cloudify-aws-plugin/1.4.9/cloudify_aws_plugin-1.4.9-py27-none-linux_x86_64-centos-Core.wgn'
       Step3-Upload-Diamond-Plugin-Package-Centos: 'cfy plugins upload http://repository.cloudifysource.org/cloudify/wagons/cloudify-diamond-plugin/1.3.5/cloudify_diamond_plugin-1.3.5-py27-none-linux_x86_64-centos-Core.wgn'
       Step4-Upload-Diamond-Plugin-Package-Ubuntu: 'cfy plugins upload http://repository.cloudifysource.org/cloudify/wagons/cloudify-diamond-plugin/1.3.5/cloudify_diamond_plugin-1.3.5-py27-none-linux_x86_64-Ubuntu-trusty.wgn'
       Step5-Create-AWS-Secrets:
@@ -383,23 +383,19 @@ outputs:
           - { get_input: aws_access_key_id }
           - ' aws_access_key_id && cfy secrets create  -s '
           - { get_input: aws_secret_access_key }
-          - ' aws_secret_access_key'
-      Step6-Execute-Nodecellar-Demo:
-        concat:
-          - 'cfy install https://github.com/cloudify-examples/nodecellar-auto-scale-auto-heal-blueprint/archive/4.0.zip -b demo -n aws-haproxy-blueprint.yaml'
-          - ' -i ec2_region_name='
+          - ' aws_secret_access_key && cfy secrets create  -s '
           - { get_input: ec2_region_name }
-          - ' -i ec2_region_endpoint='
+          - ' ec2_region_name && cfy secrets create  -s '
           - { get_input: ec2_region_endpoint }
-          - ' -i vpc_id='
+          - ' ec2_region_endpoint && cfy secrets create  -s '
           - { get_attribute: [ vpc, aws_resource_id ] }
-          - ' -i public_subnet_id='
+          - ' vpc_id && cfy secrets create  -s '
           - { get_attribute: [ subnet0, aws_resource_id ] }
-          - ' -i private_subnet_id='
+          - ' public_subnet_id && cfy secrets create  -s '
           - { get_attribute: [ subnet1, aws_resource_id ] }
-          - ' -i availability_zone='
+          - ' private_subnet_id && cfy secrets create  -s '
           - { get_input: availability_zone }
-          - ' -i vpc_cidr_block='
-          - { get_property: [ vpc, cidr_block ] }
-          - ' -i ami='
-          - { get_input: ubuntu_trusty_ami_examples }
+          - ' availability_zone && cfy secrets create  -s '
+          - { get_input: ubuntu_trusty_ami }
+          - ' ubuntu_trusty_ami'
+      Step6-Execute-Nodecellar-Demo: 'cfy install https://github.com/cloudify-examples/nodecellar-auto-scale-auto-heal-blueprint/archive/4.0.1.zip -b demo -n aws-haproxy-blueprint.yaml'

@@ -68,7 +68,7 @@ _Note: Your example output should look like this:_
     "Step3-Upload-Diamond-Plugin-Package-Centos": "cfy plugins upload http://repository.cloudifysource.org/cloudify/wagons/cloudify-diamond-plugin/1.3.5/cloudify_diamond_plugin-1.3.5-py27-none-linux_x86_64-centos-Core.wgn",
     "Step4-Upload-Diamond-Plugin-Package-Ubuntu": "cfy plugins upload http://repository.cloudifysource.org/cloudify/wagons/cloudify-diamond-plugin/1.3.5/cloudify_diamond_plugin-1.3.5-py27-none-linux_x86_64-Ubuntu-trusty.wgn",
     "Step5-Create-AWS-Secrets": "cfy secrets create -s ********** aws_access_key_id && cfy secrets create  -s ********** aws_secret_access_key",
-    "Step6-Execute-Nodecellar-Demo": "cfy install https://github.com/cloudify-examples/nodecellar-auto-scale-auto-heal-blueprint/archive/4.0.zip -b demo -n aws-haproxy-blueprint.yaml -i ec2_region_name=us-east-1 -i ec2_region_endpoint=ec2.us-east-1.amazonaws.com -i vpc_id=********** -i public_subnet_id=********** -i private_subnet_id=********** -i availability_zone=us-east-1e -i ami=ami-772aa961"
+    "Step6-Execute-Nodecellar-Demo": "cfy install https://github.com/cloudify-examples/nodecellar-auto-scale-auto-heal-blueprint/archive/4.0.zip -b demo -n aws-haproxy-blueprint.yaml"
   }
 }
 ```
@@ -132,7 +132,7 @@ _Note: Your example output should look like this:_
     "Step3-Upload-Diamond-Plugin-Package-Centos": "cfy plugins upload http://repository.cloudifysource.org/cloudify/wagons/cloudify-diamond-plugin/1.3.5/cloudify_diamond_plugin-1.3.5-py27-none-linux_x86_64-centos-Core.wgn",
     "Step4-Upload-Diamond-Plugin-Package-Ubuntu": "cfy plugins upload http://repository.cloudifysource.org/cloudify/wagons/cloudify-diamond-plugin/1.3.5/cloudify_diamond_plugin-1.3.5-py27-none-linux_x86_64-Ubuntu-trusty.wgn",
     "Step5-Create-Openstack-Secrets": "cfy secrets create -s ******* keystone_username && cfy secrets create  -s ******* keystone_password && cfy secrets create  -s ******* keystone_tenant_name && cfy secrets create -s ******* keystone_url",
-    "Step6-Execute-Nodecellar-Demo": "cfy install https://github.com/cloudify-examples/nodecellar-auto-scale-auto-heal-blueprint/archive/4.0.zip -b demo -n openstack-haproxy-blueprint.yaml -i region=RegionOne -i external_network_name=GATEWAY_NET -i router_name=network0_router -i public_network_name=network0 -i private_network_name=network1 -i public_subnet_name=network0_subnet -i private_subnet_name=network1_subnet -i image=e41430f7-9131-495b-927f-e7dc4b8994c8 -i flavor=1"
+    "Step6-Execute-Nodecellar-Demo": "cfy install https://github.com/cloudify-examples/nodecellar-auto-scale-auto-heal-blueprint/archive/4.0.zip -b demo -n openstack-haproxy-blueprint.yaml"
   }
 }
 ```
@@ -174,7 +174,7 @@ _Note: Your example output should look like this:_
     "Step3-Upload-Diamond-Plugin-Package-Centos": "cfy plugins upload http://repository.cloudifysource.org/cloudify/wagons/cloudify-diamond-plugin/1.3.5/cloudify_diamond_plugin-1.3.5-py27-none-linux_x86_64-centos-Core.wgn",
     "Step4-Upload-Diamond-Plugin-Package-Ubuntu": "cfy plugins upload http://repository.cloudifysource.org/cloudify/wagons/cloudify-diamond-plugin/1.3.5/cloudify_diamond_plugin-1.3.5-py27-none-linux_x86_64-Ubuntu-trusty.wgn",
     "Step5-Create-Azure-Secrets": "cfy secrets create -s ***************** subscription_id && cfy secrets create  -s ***************** tenant_id && cfy secrets create  -s ***************** client_id && cfy secrets create  -s ***************** client_secret",
-    "Step6-Execute-Nodecellar-Demo": "cfy install https://github.com/cloudify-examples/nodecellar-auto-scale-auto-heal-blueprint/archive/4.0.zip -b demo -n azure-haproxy-blueprint.yaml -i location=eastus -i mgr_resource_group_name=******* -i mgr_virtual_network_name=******* -i mgr_subnet_name=******* -i vm_os_username_public_key_data='************' -i cloudify_manager_agent_key_path=/home/cfyuser/.ssh/key.pem"
+    "Step6-Execute-Nodecellar-Demo": "cfy install https://github.com/cloudify-examples/nodecellar-auto-scale-auto-heal-blueprint/archive/4.0.zip -b demo -n azure-haproxy-blueprint.yaml"
   }
 }
 ```
