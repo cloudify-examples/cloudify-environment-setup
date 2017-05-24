@@ -345,21 +345,17 @@ outputs:
           - { get_input: client_id }
           - ' client_id && cfy secrets create  -s '
           - { get_input: client_secret }
-          - ' client_secret'
-      Step6-Execute-Nodecellar-Demo:
-        concat:
-          - 'cfy install https://github.com/cloudify-examples/nodecellar-auto-scale-auto-heal-blueprint/archive/4.0.zip -b demo -n azure-haproxy-blueprint.yaml'
-          - ' -i location='
+          - ' client_secret && cfy secrets create  -s '
           - { get_input: location }
-          - ' -i mgr_resource_group_name='
+          - ' location && cfy secrets create  -s '
           - { get_attribute: [ resource_group, name ] }
-          - ' -i mgr_virtual_network_name='
+          - ' mgr_resource_group_name && cfy secrets create  -s '
           - { get_attribute: [ virtual_network, name ] }
-          - ' -i mgr_subnet_name='
+          - ' mgr_virtual_network_name && cfy secrets create  -s '
           - { get_attribute: [ subnet0, name ] }
-          - ' -i vm_os_username_public_key_data='
+          - ' mgr_subnet_name && cfy secrets create  -s '
           - ''''
           - { get_attribute: [ key, public_key_export ] }
           - ''''
-          - ' -i cloudify_manager_agent_key_path='
-          - { concat: [ '/home/', { get_input: cloudify_manager_host_username },'/.ssh/key.pem' ] }
+          - ' vm_os_username_public_key_data && cfy secrets create -s /home/cfyuser/.ssh/key.pem cloudify_manager_agent_key_path'
+      Step6-Execute-Nodecellar-Demo: 'cfy install https://github.com/cloudify-examples/nodecellar-auto-scale-auto-heal-blueprint/archive/4.0.zip -b demo -n azure-haproxy-blueprint.yaml'
