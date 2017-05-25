@@ -1,8 +1,9 @@
 tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
-  - http://www.getcloudify.org/spec/cloudify/4.0/types.yaml
-  - http://www.getcloudify.org/spec/openstack-plugin/2.0.1/plugin.yaml
+  - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/4.0.1/resources/rest-service/cloudify/types/types.yaml
+  - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-openstack-plugin/2.0.1/plugin.yaml
+  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.2.1/plugin.yaml
 
 inputs:
 
@@ -24,11 +25,17 @@ inputs:
   external_network_name:
     description: Openstack tenant external network name.
 
-  cloudify_key:
+  local_ssh_directory:
+    default: '~/.ssh/'
+
+  manager_key_name:
     default: cfy-manager-key
 
+  agent_key_name:
+    default: cfy-agent-key
+
   cloudify_key_file:
-    default: ~/.ssh/cfy-manager-key.pem
+    default: { concat: [ { get_input: local_ssh_directory }, { get_input: manager_key_name } ] }
 
   nameservers:
     default: [8.8.4.4, 8.8.8.8]
@@ -49,19 +56,19 @@ inputs:
     - start: 192.168.121.2
       end: 192.168.121.254
 
-  cloudify_image_id:
+  cloudify_image:
     type: string
 
-  large_openstack_image_flavor:
+  large_image_flavor:
     type: string
 
-  small_openstack_image_flavor:
+  small_image_flavor:
     type: string
 
-  cloudify_manager_host_username:
+  cloudify_image_username:
     default: centos
 
-  ubuntu_trusty_id_examples:
+  ubuntu_trusty_image:
     type: string
 
 dsl_definitions:
@@ -72,14 +79,48 @@ dsl_definitions:
     auth_url: { get_input: auth_url }
     region: { get_input: region }
 
+node_types:
+
+  cloudify.nodes.CloudConfig:
+    derived_from: cloudify.nodes.Root
+    properties:
+      resource_config:
+        default:
+          encode_base64: false
+
 node_templates:
 
-  key:
-    type: cloudify.openstack.nodes.KeyPair
+  manager_key:
+    type: cloudify.keys.nodes.RSAKey
     properties:
-      openstack_config: *client_config
-      resource_id: { get_input: cloudify_key }
-      private_key_path: { get_input: cloudify_key_file }
+      resource_config:
+        public_key_path: { concat: [ { get_input: local_ssh_directory }, { get_input: manager_key_name }, '.pub' ] }
+        private_key_path: { concat: [ { get_input: local_ssh_directory }, { get_input: manager_key_name } ] }
+        openssh_format: true
+      use_secret_store: false
+      key_name: { get_input: manager_key_name }
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: keys.cloudify_ssh_key.operations.create
+          inputs:
+            store_private_key_material: true
+
+  agent_key:
+    type: cloudify.keys.nodes.RSAKey
+    properties:
+      resource_config:
+        public_key_path: { concat: [ { get_input: local_ssh_directory }, { get_input: agent_key_name }, '.pub' ] }
+        private_key_path: { concat: [ { get_input: local_ssh_directory }, { get_input: agent_key_name } ] }
+        openssh_format: true
+      use_secret_store: false
+      key_name: { get_input: agent_key_name }
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: keys.cloudify_ssh_key.operations.create
+          inputs:
+            store_private_key_material: true
 
   external_network:
     type: cloudify.openstack.nodes.Network
@@ -255,6 +296,21 @@ node_templates:
     - type: cloudify.openstack.port_connected_to_security_group
       target: cloudify_security_group
 
+  cloudify_host_cloud_config:
+    type: cloudify.nodes.CloudConfig
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: scripts/cloud_config/create.py
+          executor: central_deployment_agent
+          inputs:
+            cloud_config:
+              ssh_authorized_keys:
+              - { get_attribute: [ manager_key, public_key_export ] }
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: manager_key
+
   cloudify_host:
     type: cloudify.openstack.nodes.Server
     properties:
@@ -262,20 +318,29 @@ node_templates:
       agent_config:
         install_method: none
       server:
-        image: { get_input: cloudify_image_id }
-        flavor: { get_input: large_openstack_image_flavor }
+        key_name: ''
+        image: { get_input: cloudify_image }
+        flavor: { get_input: large_image_flavor }
       management_network_name: { get_property: [ network1, resource_id ] }
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          inputs:
+            args:
+              image: { get_input: cloudify_image }
+              flavor: { get_input: large_image_flavor }
+              userdata: { get_attribute: [ cloudify_host_cloud_config, cloud_config ] }
     relationships:
-    - type: cloudify.openstack.server_connected_to_keypair
-      target: key
     - type: cloudify.openstack.server_connected_to_port
       target: network0_subnet_port
     - type: cloudify.openstack.server_connected_to_port
       target: network1_subnet_port
+    - type: cloudify.relationships.depends_on
+      target: cloudify_host_cloud_config
 
 outputs:
 
-  Configure-Manager-and-Run-Example:
+  Bootstrap:
     value:
       Step0a-Upload-Key:
         concat:
@@ -285,7 +350,7 @@ outputs:
         - 'ssh -i '
         - { get_input: cloudify_key_file  }
         - ' '
-        - { get_input: cloudify_manager_host_username }
+        - { get_input: cloudify_image_username }
         - '@'
         - { get_attribute: [ network0_subnet_port_fip, floating_ip_address ] }
         - ' '''
@@ -296,7 +361,7 @@ outputs:
         - 'ssh -t -i '
         - { get_input: cloudify_key_file  }
         - ' '
-        - { get_input: cloudify_manager_host_username }
+        - { get_input: cloudify_image_username }
         - '@'
         - { get_attribute: [ network0_subnet_port_fip, floating_ip_address ] }
         - ' '''
@@ -307,7 +372,7 @@ outputs:
         - 'ssh -i '
         - { get_input: cloudify_key_file  }
         - ' '
-        - { get_input: cloudify_manager_host_username }
+        - { get_input: cloudify_image_username }
         - '@'
         - { get_attribute: [ network0_subnet_port_fip, floating_ip_address ] }
         - ' '''
@@ -316,14 +381,17 @@ outputs:
         - ' -i private_ip='
         - { get_attribute: [ network0_subnet_port, fixed_ip_address ] }
         - ' -i ssh_user='
-        - { get_input: cloudify_manager_host_username }
+        - { get_input: cloudify_image_username }
         - ' -i ssh_key_filename=~/.ssh/key.pem'
         - ' -i agents_user=ubuntu -i ignore_bootstrap_validations=false -i admin_username=admin -i admin_password=admin'
         - ''''
+
+  Configuration:
+    value:
       Step1-Initialize-Cloudify-Manager-CLI-Profile:
         concat:
           - 'cfy profiles use -s '
-          - { get_input: cloudify_manager_host_username }
+          - { get_input: cloudify_image_username }
           - ' -k '
           - { get_input: cloudify_key_file }
           - ' -u admin -p admin -t default_tenant '
@@ -332,28 +400,49 @@ outputs:
       Step3-Upload-Diamond-Plugin-Package-Centos: 'cfy plugins upload http://repository.cloudifysource.org/cloudify/wagons/cloudify-diamond-plugin/1.3.5/cloudify_diamond_plugin-1.3.5-py27-none-linux_x86_64-centos-Core.wgn'
       Step4-Upload-Diamond-Plugin-Package-Ubuntu: 'cfy plugins upload http://repository.cloudifysource.org/cloudify/wagons/cloudify-diamond-plugin/1.3.5/cloudify_diamond_plugin-1.3.5-py27-none-linux_x86_64-Ubuntu-trusty.wgn'
       Step5-Create-Openstack-Secrets:
-        concat:
-          - 'cfy secrets create -s '
-          - { get_input: username }
-          - ' keystone_username && cfy secrets create  -s '
-          - { get_input: password }
-          - ' keystone_password && cfy secrets create  -s '
-          - { get_input: tenant_name }
-          - ' keystone_tenant_name && cfy secrets create  -s '
-          - { get_input: auth_url }
-          - ' keystone_url && cfy secrets create  -s '
-          - { get_input: region }
-          - ' region && cfy secrets create  -s '
-          - { get_property: [ external_network, resource_id ] }
-          - ' external_network_name && cfy secrets create  -s '
-          - { get_property: [ network0_router, resource_id ] }
-          - ' router_name && cfy secrets create  -s '
-          - { get_property: [ network0, resource_id ] }
-          - ' public_network_name && cfy secrets create  -s '
-          - { get_property: [ network1, resource_id ] }
-          - ' private_network_name && cfy secrets create  -s '
-          - { get_property: [ network0_subnet, resource_id ] }
-          - ' public_subnet_name && cfy secrets create  -s '
-          - { get_property: [ network1_subnet, resource_id ] }
-          - ' private_subnet_name'
+        First-group:
+          concat:
+            - 'cfy secrets create -s '
+            - { get_input: username }
+            - ' keystone_username && cfy secrets create  -s '
+            - { get_input: password }
+            - ' keystone_password && cfy secrets create  -s '
+            - { get_input: tenant_name }
+            - ' keystone_tenant_name && cfy secrets create  -s '
+            - { get_input: auth_url }
+            - ' keystone_url && cfy secrets create  -s '
+            - { get_input: region }
+            - ' region && cfy secrets create  -s '
+            - { get_property: [ external_network, resource_id ] }
+            - ' external_network_name && cfy secrets create  -s '
+            - { get_property: [ network0_router, resource_id ] }
+            - ' router_name && cfy secrets create  -s '
+            - { get_property: [ network0, resource_id ] }
+            - ' public_network_name && cfy secrets create  -s '
+            - { get_property: [ network1, resource_id ] }
+            - ' private_network_name && cfy secrets create  -s '
+            - { get_property: [ network0_subnet, resource_id ] }
+            - ' public_subnet_name && cfy secrets create  -s '
+            - { get_property: [ network1_subnet, resource_id ] }
+            - ' private_subnet_name && cfy secrets create -s '
+            - { get_input: ubuntu_trusty_image }
+            - ' ubuntu_trusty_image && cfy secrets create -s '
+            - { get_input: small_image_flavor }
+            - ' small_image_flavor && cfy secrets create -s '
+            - ''''
+            - { get_attribute: [ agent_key, public_key_export ] }
+            - ''''
+            - ' agent_key_public'
+
+        # THIS DOESNT WORK
+        Second-group-REMOVE_BACKSLASHES_AROUND_COMMAND_KEEP_DOUBLE_QUOTES:
+          concat:
+            - 'cfy secrets create '
+            - 'agent_key_private -s '
+            - '"$(<'
+            - { concat: [ { get_input: local_ssh_directory }, { get_input: agent_key_name } ] }
+            - ')"'
+
+  Demo:
+    value:
       Step6-Execute-Nodecellar-Demo: 'cfy install https://github.com/cloudify-examples/nodecellar-auto-scale-auto-heal-blueprint/archive/4.0.zip -b demo -n openstack-haproxy-blueprint.yaml'
