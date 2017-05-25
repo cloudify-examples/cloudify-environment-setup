@@ -1,7 +1,7 @@
 tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
-  - http://www.getcloudify.org/spec/cloudify/4.0.1/types.yaml
+  - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/4.0.1/resources/rest-service/cloudify/types/types.yaml
   - http://getcloudify.org.s3.amazonaws.com/spec/aws-plugin/1.4.9/plugin.yaml
   - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.2.1/plugin.yaml
 
@@ -77,6 +77,15 @@ dsl_definitions:
     aws_secret_access_key: { get_input: aws_secret_access_key }
     ec2_region_name: { get_input: ec2_region_name }
     ec2_region_endpoint: { get_input: ec2_region_endpoint }
+
+node_types:
+
+  cloudify.nodes.CloudConfig:
+    derived_from: cloudify.nodes.Root
+    properties:
+      resource_config:
+        default:
+          encode_base64: false
 
 node_templates:
 
@@ -329,7 +338,7 @@ node_templates:
         target: nat_instance
 
   cloudify_host_cloud_config:
-    type: cloudify.nodes.Root
+    type: cloudify.nodes.CloudConfig
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
