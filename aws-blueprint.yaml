@@ -483,4 +483,4 @@ outputs:
 
   Demo:
     value:
-      Step6-Execute-Nodecellar-Demo: 'cfy install https://github.com/cloudify-examples/nodecellar-auto-scale-auto-heal-blueprint/archive/4.0.1.zip -b demo -n aws-haproxy-blueprint.yaml'
+      Step6-Execute-Nodecellar-Demo: 'cfy install https://github.com/cloudify-examples/nodecellar-auto-scale-auto-heal-blueprint/archive/4.0.1.zip -b demo -n aws-blueprint.yaml'
