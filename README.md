@@ -3,6 +3,10 @@
 
 Blueprints that provision infrastructure and start a Cloudify Manager.
 
+_Note: Ignoring a number of factors, the following steps should take 20 - 40 minutes.
+
+To ask a question or report an issue, please use [github issues](https://github.com/cloudify-examples/nodecellar-auto-scale-auto-heal-blueprint/issues) or visit the [Cloudify users groups](https://groups.google.com/forum/#!forum/cloudify-users).
+
 
 ### purpose
 
@@ -22,11 +26,7 @@ Cloudify Manager is designed to work in any environment, whether cloud, baremeta
 
 Decide how you want to install your manager. There are two options:
 
-* Executing bootstrap (using Cloudify locally to install manager components). If you want to bootstrap, continue to the instructions for your cloud. After you deploy your cloud environment, you will find additional steps (Step0a, Step0b, and Step0c) in the deployment outputs.
-  - [AWS](#aws-instructions)
-  - [Openstack](#openstack-instructions)
-  - [Azure](#azure-instructions)
-
+* Executing bootstrap (using Cloudify locally to install manager components).
 
 * Using a pre-bootstrapped image. You will find a list of pre-bootstrapped images on [Cloudify's Downloads page](http://cloudify.co/downloads/get_cloudify.html).
   - The current AWS AMIs are listed [here](http://cloudify.co/thank_you_aws_ent) by region.
@@ -34,13 +34,17 @@ Decide how you want to install your manager. There are two options:
   - There is not currently a pre-bootstrapped image for Azure, so bootstrap is the only option.
 
 
-# aws instructions
+# instructions
 
-1. Download and extract this blueprint archive ([link](https://github.com/cloudify-examples/cloudify-environment-blueprint/archive/latest.zip)) to your current working directory.
+### 1. Download and extract this blueprint archive ([link](https://github.com/cloudify-examples/cloudify-environment-blueprint/archive/latest.zip)) to your current working directory.
 
-2. Install the infrastructure and insert your AWS Account Keys where indicated in the example command below.
+
+### 2. To install your environment's infrastructure, execute one of the example commands below, inserting your account credentials where indicated.
 
 _Note: This command should be run from the same directory in which you extracted the blueprint in the previous step._
+
+
+#### For AWS run:
 
 ```shell
 $ cfy install cloudify-environment-blueprint-latest/aws-blueprint.yaml \
@@ -50,50 +54,19 @@ $ cfy install cloudify-environment-blueprint-latest/aws-blueprint.yaml \
 ```
 
 
-3. Show the outputs, and follow the instructions to configure your manager and run the demo application.
+#### For Azure run:
 
 ```shell
-$ cfy deployments outputs
+$ cfy install simple-infrastructure-blueprint/azure-blueprint.yaml \
+    -i subscription_id=[INSERT_YOUR_AZURE_SUBSCRIPTION_ID] \
+    -i tenant_id=[INSERT_YOUR_AZURE_TENANT_ID] \
+    -i client_id=[INSERT_YOUR_AZURE_CLIENT_ID] \
+    -i client_secret=[INSERT_YOUR_AZURE_CLIENT_SECRET] \
+    --task-retries=30 --task-retry-interval=5
 ```
 
-_Advice: Wait a couple minutes after the installation has succeeded to run these commands._
 
-_Note: Your example output should look like this:_
-
-```json
-{
-  "Configure-Manager-and-Run-Example": {
-    "Step1-Initialize-Cloudify-Manager-CLI-Profile": "cfy profiles use -s centos -k ~/.ssh/cfy-manager-key.pem -u admin -p admin -t default_tenant **********",
-    "Step2-Upload-AWS-Plugin-Package-Centos": "cfy plugins upload http://repository.cloudifysource.org/cloudify/wagons/cloudify-aws-plugin/1.4.4/cloudify_aws_plugin-1.4.4-py27-none-linux_x86_64-centos-Core.wgn",
-    "Step3-Upload-Diamond-Plugin-Package-Centos": "cfy plugins upload http://repository.cloudifysource.org/cloudify/wagons/cloudify-diamond-plugin/1.3.5/cloudify_diamond_plugin-1.3.5-py27-none-linux_x86_64-centos-Core.wgn",
-    "Step4-Upload-Diamond-Plugin-Package-Ubuntu": "cfy plugins upload http://repository.cloudifysource.org/cloudify/wagons/cloudify-diamond-plugin/1.3.5/cloudify_diamond_plugin-1.3.5-py27-none-linux_x86_64-Ubuntu-trusty.wgn",
-    "Step5-Create-AWS-Secrets": "cfy secrets create -s ********** aws_access_key_id && cfy secrets create  -s ********** aws_secret_access_key",
-    "Step6-Execute-Nodecellar-Demo": "cfy install https://github.com/cloudify-examples/nodecellar-auto-scale-auto-heal-blueprint/archive/4.0.zip -b demo -n aws-haproxy-blueprint.yaml -i ec2_region_name=us-east-1 -i ec2_region_endpoint=ec2.us-east-1.amazonaws.com -i vpc_id=********** -i public_subnet_id=********** -i private_subnet_id=********** -i availability_zone=us-east-1e -i ami=ami-772aa961"
-  }
-}
-```
-
-_Note: In rare cases, the VM will not provision correctly and you may see this response to the ```cfy profiles use...``` command:_
-
-```shell
-<head><title>502 Bad Gateway</title></head>
-<body bgcolor="white">
-<center><h1>502 Bad Gateway</h1></center>
-<hr><center>nginx/1.8.0</center>
-</body>
-</html>
-```
-
-If that is the case, restart the Manager VM.
-
-
-# openstack instructions
-
-1. Download and extract this blueprint archive ([link](https://github.com/cloudify-examples/cloudify-environment-blueprint/archive/latest.zip)) to your current working directory.
-
-2. Install the infrastructure and insert your Openstack credentials where indicated in the example command below.
-
-_Note: This command should be run from the same directory in which you extracted the blueprint in the previous step._
+#### For Openstack run:
 
 ```shell
 $ cfy install cloudify-environment-blueprint-latest/openstack-blueprint.yaml \
@@ -111,86 +84,202 @@ $ cfy install cloudify-environment-blueprint-latest/openstack-blueprint.yaml \
 ```
 
 
-3. Show the outputs, and follow the instructions to configure your manager and run the demo application.
+### 3. Gather the information you need to configure your manager (or bootstrap and then configure). You can get that information from the `cfy deployments outputs` CLI command.
 
 ```shell
 $ cfy deployments outputs
 ```
 
-_Advice: Wait a couple minutes after the installation has succeeded to run these commands._
-
-_Note: Your example output should look like this:_
+*The command output should look like this:*
 
 ```json
 {
-  "Configure-Manager-and-Run-Example": {
-    "Step0a-Upload-Key": "cat ~/.ssh/cfy-manager-key.pem | ssh -i ~/.ssh/cfy-manager-key.pem centos@***.***.***.*** 'cat >> ~/.ssh/key.pem && chmod 600 ~/.ssh/key.pem'",
-    "Step0b-Install-Cloudify-CLI": "ssh -t -i ~/.ssh/cfy-manager-key.pem centos@***.***.***.*** 'sudo rpm -i http://repository.cloudifysource.org/cloudify/4.0.1/sp-release/cloudify-4.0.1~sp.el6.x86_64.rpm'",
-    "Step0c-Install-Cloudify-Manager": "ssh -i ~/.ssh/cfy-manager-key.pem centos@***.***.***.*** 'cfy bootstrap --install-plugins /opt/cfy/cloudify-manager-blueprints/simple-manager-blueprint.yaml -i public_ip=***.***.***.*** -i private_ip=***.***.***.*** -i ssh_user=centos -i ssh_key_filename=~/.ssh/key.pem -i agents_user=ubuntu -i ignore_bootstrap_validations=false -i admin_username=admin -i admin_password=admin'",
-    "Step1-Initialize-Cloudify-Manager-CLI-Profile": "cfy profiles use -s centos -k ~/.ssh/cfy-manager-key.pem -u admin -p admin -t default_tenant ***.***.***.***",
-    "Step2-Upload-Openstack-Plugin-Package-Centos": "cfy plugins upload http://repository.cloudifysource.org/cloudify/wagons/cloudify-openstack-plugin/2.0.1/cloudify_openstack_plugin-2.0.1-py27-none-linux_x86_64-centos-Core.wgn",
+  "Bootstrap": {
+    "Step0a-Upload-Key": "cat ~/.ssh/cfy-manager-key | ssh -i ~/.ssh/cfy-manager-key cfyuser@**.**.***.*** 'cat >> ~/.ssh/key.pem && chmod 600 ~/.ssh/key.pem'",
+    "Step0b-Install-Cloudify-CLI": "ssh -t -i ~/.ssh/cfy-manager-key cfyuser@**.**.***.*** 'sudo rpm -i http://repository.cloudifysource.org/cloudify/4.0.1/sp-release/cloudify-4.0.1~sp.el6.x86_64.rpm'",
+    "Step0c-Install-Cloudify-Manager": "ssh -i ~/.ssh/cfy-manager-key cfyuser@**.**.***.*** 'cfy bootstrap --install-plugins /opt/cfy/cloudify-manager-blueprints/simple-manager-blueprint.yaml -i public_ip=**.**.***.*** -i private_ip=10.10.0.4 -i ssh_user=cfyuser -i ssh_key_filename=~/.ssh/key.pem -i agents_user=ubuntu -i ignore_bootstrap_validations=false -i admin_username=admin -i admin_password=admin'"
+  },
+  "Configuration": {
+    "Step1-Initialize-Cloudify-Manager-CLI-Profile": "cfy profiles use -s cfyuser -k ~/.ssh/cfy-manager-key -u admin -p admin -t default_tenant **.**.***.***",
+    "Step2-Upload-Openstack-Plugin-Package-Centos": "cfy plugins upload http://repository.cloudifysource.org/cloudify/wagons/cloudify-azure-plugin/1.4.1/cloudify_azure_plugin-1.4.1-py27-none-linux_x86_64-centos-Core.wgn",
     "Step3-Upload-Diamond-Plugin-Package-Centos": "cfy plugins upload http://repository.cloudifysource.org/cloudify/wagons/cloudify-diamond-plugin/1.3.5/cloudify_diamond_plugin-1.3.5-py27-none-linux_x86_64-centos-Core.wgn",
     "Step4-Upload-Diamond-Plugin-Package-Ubuntu": "cfy plugins upload http://repository.cloudifysource.org/cloudify/wagons/cloudify-diamond-plugin/1.3.5/cloudify_diamond_plugin-1.3.5-py27-none-linux_x86_64-Ubuntu-trusty.wgn",
-    "Step5-Create-Openstack-Secrets": "cfy secrets create -s ******* keystone_username && cfy secrets create  -s ******* keystone_password && cfy secrets create  -s ******* keystone_tenant_name && cfy secrets create -s ******* keystone_url",
-    "Step6-Execute-Nodecellar-Demo": "cfy install https://github.com/cloudify-examples/nodecellar-auto-scale-auto-heal-blueprint/archive/4.0.zip -b demo -n openstack-haproxy-blueprint.yaml -i region=RegionOne -i external_network_name=GATEWAY_NET -i router_name=network0_router -i public_network_name=network0 -i private_network_name=network1 -i public_subnet_name=network0_subnet -i private_subnet_name=network1_subnet -i image=e41430f7-9131-495b-927f-e7dc4b8994c8 -i flavor=1"
+    "Step5-Create-Azure-Secrets": {
+      "First-group": "cfy secrets create -s ********* subscription_id && cfy secrets create  -s ********* tenant_id && cfy secrets create  -s ********* client_id && cfy secrets create  -s i********* client_secret && cfy secrets create  -s eastus location && cfy secrets create  -s pmrg2 mgr_resource_group_name && cfy secrets create  -s pmvn2 mgr_virtual_network_name && cfy secrets create  -s pms02 mgr_subnet_name && cfy secrets create  -s Canonical ubuntu_trusty_image_publisher && cfy secrets create -s UbuntuServer ubuntu_trusty_image_offer && cfy secrets create -s 14.04.4-LTS ubuntu_trusty_image_sku && cfy secrets create -s 14.04.201604060 ubuntu_trusty_image_version && cfy secrets create -s Standard_A0 small_image_size && cfy secrets create -s 'ssh-rsa *********' agent_key_public",
+      "Second-group-REMOVE_BACKSLASHES_AROUND_COMMAND_KEEP_DOUBLE_QUOTES": "cfy secrets create agent_key_private -s \"$(<~/.ssh/cfy-agent-key)\""
+    }
+  },
+  "Demo": {
+    "Step6-Execute-Nodecellar-Demo": "cfy install https://github.com/cloudify-examples/nodecellar-auto-scale-auto-heal-blueprint/archive/4.0.1.zip -b demo -n azure-haproxy-blueprint.yaml"
   }
 }
 ```
 
 
-# azure instructions
+### 4. Bootstrap
 
-1. Download and extract this blueprint archive ([link](https://github.com/cloudify-examples/cloudify-environment-blueprint/archive/latest.zip)) to your current working directory.
-
-2. Install the infrastructure and insert your Azure credentials where indicated in the example command below.
-
-_Note: This command should be run from the same directory in which you extracted the blueprint in the previous step._
+#### Upload an SSH key to the manager VM:
 
 ```shell
-$ cfy install simple-infrastructure-blueprint/azure-blueprint.yaml \
-    -i credentials/simple-infrastructure-blueprint/azure.yaml \
-    --task-retries=30 --task-retry-interval=5
+$ cat ~/.ssh/cfy-manager-key | ssh -i ~/.ssh/cfy-manager-key \
+    cfyuser@**.**.***.*** 'cat >> ~/.ssh/key.pem && chmod 600 ~/.ssh/key.pem'
 ```
 
+_Note: Answer `yes` when prompted.
 
-3. Show the outputs, and follow the instructions to configure your manager and run the demo application.
+
+#### Install the Cloudify CLI on the manager host:
 
 ```shell
-$ cfy deployments outputs
+$ ssh -t -i ~/.ssh/cfy-manager-key \
+    cfyuser@**.**.***.*** 'sudo rpm -i \
+    http://repository.cloudifysource.org/cloudify/4.0.1/sp-release/cloudify-4.0.1~sp.el6.x86_64.rpm'
 ```
 
-_Advice: Wait a couple minutes after the installation has succeeded to run these commands._
-
-_Note: Your example output should look like this:_
-
-```json
-{
-  "Configure-Manager-and-Run-Example": {
-    "Step0a-Upload-Key": "cat ~/.ssh/cfy-manager-key | ssh -i ~/.ssh/cfy-manager-key cfyuser@***.***.***.*** 'cat >> ~/.ssh/key.pem && chmod 600 ~/.ssh/key.pem'",
-    "Step0b-Install-Cloudify-CLI": "ssh -t -i ~/.ssh/cfy-manager-key cfyuser@***.***.***.*** 'sudo rpm -i http://repository.cloudifysource.org/cloudify/4.0.1/sp-release/cloudify-4.0.1~sp.el6.x86_64.rpm'",
-    "Step0c-Install-Cloudify-Manager": "ssh -i ~/.ssh/cfy-manager-key cfyuser@***.***.***.*** 'cfy bootstrap --install-plugins /opt/cfy/cloudify-manager-blueprints/simple-manager-blueprint.yaml -i public_ip=40.71.173.208 -i private_ip=10.10.0.4 -i ssh_user=cfyuser -i ssh_key_filename=~/.ssh/key.pem -i agents_user=ubuntu -i ignore_bootstrap_validations=false -i admin_username=admin -i admin_password=admin'",
-    "Step1-Initialize-Cloudify-Manager-CLI-Profile": "cfy profiles use -s cfyuser -k ~/.ssh/cfy-manager-key -u admin -p admin -t default_tenant ***.***.***.***",
-    "Step2-Upload-Azure-Plugin-Package-Centos": "cfy plugins upload http://repository.cloudifysource.org/cloudify/wagons/cloudify-azure-plugin/1.4.1/cloudify_azure_plugin-1.4.1-py27-none-linux_x86_64-centos-Core.wgn",
-    "Step3-Upload-Diamond-Plugin-Package-Centos": "cfy plugins upload http://repository.cloudifysource.org/cloudify/wagons/cloudify-diamond-plugin/1.3.5/cloudify_diamond_plugin-1.3.5-py27-none-linux_x86_64-centos-Core.wgn",
-    "Step4-Upload-Diamond-Plugin-Package-Ubuntu": "cfy plugins upload http://repository.cloudifysource.org/cloudify/wagons/cloudify-diamond-plugin/1.3.5/cloudify_diamond_plugin-1.3.5-py27-none-linux_x86_64-Ubuntu-trusty.wgn",
-    "Step5-Create-Azure-Secrets": "cfy secrets create -s ***************** subscription_id && cfy secrets create  -s ***************** tenant_id && cfy secrets create  -s ***************** client_id && cfy secrets create  -s ***************** client_secret",
-    "Step6-Execute-Nodecellar-Demo": "cfy install https://github.com/cloudify-examples/nodecellar-auto-scale-auto-heal-blueprint/archive/4.0.zip -b demo -n azure-haproxy-blueprint.yaml -i location=eastus -i mgr_resource_group_name=******* -i mgr_virtual_network_name=******* -i mgr_subnet_name=******* -i vm_os_username_public_key_data='************' -i cloudify_manager_agent_key_path=/home/cfyuser/.ssh/key.pem"
-  }
-}
-```
-
-# uninstall instructions
-
-1. To uninstall the demo app, run:
+You will see an output like this:
 
 ```shell
-$ cfy uninstall demo --allow-custom-parameters -p ignore_failure=true
+You're about to install Cloudify!
+Thank you for installing Cloudify!
 ```
 
 
-2. To uninstall the example environment, run:
+#### Execute bootstrap:
+
+```shell
+$ ssh -i ~/.ssh/cfy-manager-key \
+    cfyuser@**.**.***.*** 'cfy bootstrap \
+    --install-plugins \
+    /opt/cfy/cloudify-manager-blueprints/simple-manager-blueprint.yaml \
+    -i public_ip=**.**.***.*** -i private_ip=10.10.0.4 -i \
+    ssh_user=cfyuser -i ssh_key_filename=~/.ssh/key.pem \
+    -i agents_user=ubuntu -i ignore_bootstrap_validations=false \
+    -i admin_username=admin -i admin_password=admin'
+```
+
+Expect this to take 15-20 minutes.
+
+When you see the following output, the manager is up:
+
+```shell
+Bootstrap complete
+Manager is up at **.**.***.***
+##################################################
+Manager password is admin
+##################################################
+```
+
+
+### 5. Configure your manager:
+
+At this stage, it is suggested to wait 5 minutes for all of the services to synchronize. Both bootstrapped and pre-bootstrapped managers need a few moments to stabilize after starting.
+
+
+#### Initialize the manager CLI profile:
+
+You need to initialize a manager profile in order to control your manager:
+
+```shell
+$ cfy profiles use -s cfyuser -k ~/.ssh/cfy-manager-key -u admin -p admin -t default_tenant **.**.***.***
+```
+
+
+#### Upload the plugins for your manager:
+
+_Note: the exact plugins you need to upload vary. The example provided is based on the [Nodecellar Example](https://github.com/cloudify-examples/nodecellar-auto-scale-auto-heal-blueprint/tree/4.0.1) running in Azure._
+
+```shell
+$ cfy plugins upload \
+    http://repository.cloudifysource.org/cloudify/wagons/cloudify-azure-plugin/1.4.1/cloudify_azure_plugin-1.4.1-py27-none-linux_x86_64-centos-Core.wgn
+Uploading plugin http://repository.cloudifysource.org/cloudify/wagons/cloudify-azure-plugin/1.4.1/cloudify_azure_plugin-1.4.1-py27-none-linux_x86_64-centos-Core.wgn...
+Plugin uploaded. The plugin's id is 82568a34-f665-4677-af14-16575ea6c0c1
+$ cfy plugins upload \
+    http://repository.cloudifysource.org/cloudify/wagons/cloudify-diamond-plugin/1.3.5/cloudify_diamond_plugin-1.3.5-py27-none-linux_x86_64-centos-Core.wgn
+Uploading plugin http://repository.cloudifysource.org/cloudify/wagons/cloudify-diamond-plugin/1.3.5/cloudify_diamond_plugin-1.3.5-py27-none-linux_x86_64-centos-Core.wgn...
+Plugin uploaded. The plugin's id is 04efe149-ad8a-4ce1-b840-b0556a6efc18
+$ cfy plugins upload \
+    http://repository.cloudifysource.org/cloudify/wagons/cloudify-diamond-plugin/1.3.5/cloudify_diamond_plugin-1.3.5-py27-none-linux_x86_64-Ubuntu-trusty.wgn
+Uploading plugin http://repository.cloudifysource.org/cloudify/wagons/cloudify-diamond-plugin/1.3.5/cloudify_diamond_plugin-1.3.5-py27-none-linux_x86_64-Ubuntu-trusty.wgn...
+Plugin uploaded. The plugin's id is adb4c1d5-d2b8-44b6-a4c2-3bef2a78a8f7
+```
+
+
+#### Create your secrets:
+
+Adding secrets to your manager make your deployments more secure. The exact secrets you add also vary by clouds. The below example is based on Azure:
+
+```shell
+$ cfy secrets create -s ********* subscription_id && \
+    cfy secrets create -s ********* tenant_id && \
+    cfy secrets create -s ********* client_id && \
+    cfy secrets create -s i********* client_secret && \
+    cfy secrets create -s eastus location && \
+    cfy secrets create -s pmrg2 mgr_resource_group_name && \
+    cfy secrets create -s pmvn2 mgr_virtual_network_name && \
+    cfy secrets create -s pms02 mgr_subnet_name && \
+    cfy secrets create -s Canonical ubuntu_trusty_image_publisher && \
+    cfy secrets create -s UbuntuServer ubuntu_trusty_image_offer && \
+    cfy secrets create -s 14.04.4-LTS ubuntu_trusty_image_sku && \
+    cfy secrets create -s 14.04.201604060 ubuntu_trusty_image_version && \
+    cfy secrets create -s Standard_A0 small_image_size && \
+    cfy secrets create -s 'ssh-rsa *********' agent_key_public
+Secret `subscription_id` created
+Secret `tenant_id` created
+Secret `client_id` created
+Secret `client_secret` created
+Secret `location` created
+Secret `mgr_resource_group_name` created
+Secret `mgr_virtual_network_name` created
+Secret `mgr_subnet_name` created
+Secret `ubuntu_trusty_image_publisher` created
+Secret `ubuntu_trusty_image_offer` created
+Secret `ubuntu_trusty_image_sku` created
+Secret `ubuntu_trusty_image_version` created
+Secret `small_image_size` created
+Secret `agent_key_public` created
+$ cfy secrets create agent_key_private -s "$(<~/.ssh/cfy-agent-key)"
+Secret `agent_key_private` created
+```
+
+*Note that in the last command, the double-quotes are unescaped:*
+
+The deployment output was like this:
+
+```shell
+$ cfy secrets create agent_key_private -s \"$(<~/.ssh/cfy-agent-key)\"
+```
+
+But you will need to unescape the double quotes so it looks like this:
+
+```shell
+$ cfy secrets create agent_key_private -s "$(<~/.ssh/cfy-agent-key)"
+```
+
+# Your manager is now ready. Proceed to the example blueprints!
+
+Start with [Nodecellar Auto-scale Auto-heal](https://github.com/cloudify-examples/nodecellar-auto-scale-auto-heal-blueprint/tree/4.0.1).
+
+
+### 6. When you are ready to uninstall your environment, run:
 
 ```shell
 $ cfy profiles use local
 $ cfy uninstall --allow-custom-parameters -p ignore_failure=true --task-retries=30 --task-retry-interval=5
 ```
+
+
+# Trouble-shooting
+
+## 502 Bad Gateway
+
+If `cfy profiles use [IP]` fails with this output, trying restarting the VM.
+
+```shell
+<head><title>502 Bad Gateway</title></head>
+<body bgcolor="white">
+<center><h1>502 Bad Gateway</h1></center>
+<hr><center>nginx/1.8.0</center>
+</body>
+</html>
+```
+
