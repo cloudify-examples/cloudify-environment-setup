@@ -36,10 +36,10 @@ Decide how you want to install your manager. There are two options:
 
 # instructions
 
-## 1. Download and extract this blueprint archive ([link](https://github.com/cloudify-examples/cloudify-environment-blueprint/archive/latest.zip)) to your current working directory.
+### 1. Download and extract this blueprint archive ([link](https://github.com/cloudify-examples/cloudify-environment-blueprint/archive/latest.zip)) to your current working directory.
 
 
-## 2. To install your environment's infrastructure, execute one of the example commands below, inserting your account credentials where indicated.
+### 2. To install your environment's infrastructure, execute one of the example commands below, inserting your account credentials where indicated.
 
 _Note: This command should be run from the same directory in which you extracted the blueprint in the previous step._
 
@@ -84,7 +84,7 @@ $ cfy install cloudify-environment-blueprint-latest/openstack-blueprint.yaml \
 ```
 
 
-## 3. Gather the information you need to configure your manager (or bootstrap and then configure). You can get that information from the `cfy deployments outputs` CLI command.
+### 3. Gather the information you need to configure your manager (or bootstrap and then configure). You can get that information from the `cfy deployments outputs` CLI command.
 
 ```shell
 $ cfy deployments outputs
@@ -116,7 +116,7 @@ $ cfy deployments outputs
 ```
 
 
-## 4. Bootstrap
+### 4. Bootstrap
 
 #### Upload an SSH key to the manager VM:
 
@@ -170,7 +170,7 @@ Manager password is admin
 ```
 
 
-## 5. Configure your manager:
+### 5. Configure your manager:
 
 At this stage, it is suggested to wait 5 minutes for all of the services to synchronize. Both bootstrapped and pre-bootstrapped managers need a few moments to stabilize after starting.
 
@@ -255,12 +255,12 @@ But you will need to unescape the double quotes so it looks like this:
 $ cfy secrets create agent_key_private -s "$(<~/.ssh/cfy-agent-key)"
 ```
 
-# Your manager is now ready. Proceed to the example blueprints!*
+# Your manager is now ready. Proceed to the example blueprints!
 
 Start with [Nodecellar Auto-scale Auto-heal](https://github.com/cloudify-examples/nodecellar-auto-scale-auto-heal-blueprint/tree/4.0.1).
 
 
-## 6. When you are ready to uninstall your environment, run:
+### 6. When you are ready to uninstall your environment, run:
 
 ```shell
 $ cfy profiles use local
