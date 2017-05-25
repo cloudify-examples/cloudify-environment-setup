@@ -31,20 +31,42 @@ inputs:
   resource_suffix:
     default: 0
 
-  cloudify_manager_host_username:
+  cloudify_image_username:
     default: cfyuser
 
-  cloudify_host_storage_profile:
+  cloudify_image:
     default:
-      imageReference:
-        publisher: OpenLogic
-        offer: CentOS
-        sku: '7.3'
-        version: latest
+      publisher: OpenLogic
+      offer: CentOS
+      sku: '7.3'
+      version: latest
 
-  public_key_name:
-    type: string
+  local_ssh_directory:
+    default: '~/.ssh/'
+
+  manager_key_name:
     default: cfy-manager-key
+
+  agent_key_name:
+    default: cfy-agent-key
+
+  cloudify_key_file:
+    default: { concat: [ { get_input: local_ssh_directory }, { get_input: manager_key_name } ] }
+
+  ubuntu_trusty_image_publisher:
+    default: Canonical
+
+  ubuntu_trusty_image_offer:
+    default: UbuntuServer
+
+  ubuntu_trusty_image_sku:
+    default: 14.04.4-LTS
+
+  ubuntu_trusty_image_version:
+    default: 14.04.201604060
+
+  small_image_size:
+    default: Standard_A0
 
 dsl_definitions:
 
@@ -54,17 +76,48 @@ dsl_definitions:
     client_id: { get_input: client_id }
     client_secret: { get_input: client_secret }
 
+node_types:
+
+  cloudify.nodes.CloudConfig:
+    derived_from: cloudify.nodes.Root
+    properties:
+      resource_config:
+        default:
+          encode_base64: false
+
 node_templates:
 
-  key:
+  manager_key:
     type: cloudify.keys.nodes.RSAKey
     properties:
       resource_config:
-        public_key_path: { concat: [ '~/.ssh/', { get_input: public_key_name }, '.pem' ] }
-        private_key_path: { concat: [ '~/.ssh/', { get_input: public_key_name } ] }
+        public_key_path: { concat: [ { get_input: local_ssh_directory }, { get_input: manager_key_name }, '.pub' ] }
+        private_key_path: { concat: [ { get_input: local_ssh_directory }, { get_input: manager_key_name } ] }
         openssh_format: true
       use_secret_store: false
-      key_name: azure
+      key_name: { get_input: manager_key_name }
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: keys.cloudify_ssh_key.operations.create
+          inputs:
+            store_private_key_material: true
+
+  agent_key:
+    type: cloudify.keys.nodes.RSAKey
+    properties:
+      resource_config:
+        public_key_path: { concat: [ { get_input: local_ssh_directory }, { get_input: agent_key_name }, '.pub' ] }
+        private_key_path: { concat: [ { get_input: local_ssh_directory }, { get_input: agent_key_name } ] }
+        openssh_format: true
+      use_secret_store: false
+      key_name: { get_input: agent_key_name }
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: keys.cloudify_ssh_key.operations.create
+          inputs:
+            store_private_key_material: true
 
   resource_group:
     type: cloudify.azure.nodes.ResourceGroup
@@ -256,16 +309,17 @@ node_templates:
             args:
               hardwareProfile:
                 vmSize: Standard_A4
-              storageProfile: { get_input: cloudify_host_storage_profile }
+              storageProfile:
+                imageReference: { get_input: cloudify_image }
               osProfile:
                 computerName: { get_property: [SELF, name] }
-                adminUsername: { get_input: cloudify_manager_host_username }
+                adminUsername: { get_input: cloudify_image_username }
                 adminPassword: ''
                 linuxConfiguration:
                   ssh:
                     publicKeys:
-                    - keydata: { get_attribute: [ key, public_key_export ] }
-                      path: { concat: [ '/home/', { get_input: cloudify_manager_host_username }, '/.ssh/authorized_keys' ] }
+                    - keydata: { get_attribute: [ manager_key, public_key_export ] }
+                      path: { concat: [ '/home/', { get_input: cloudify_image_username }, '/.ssh/authorized_keys' ] }
                   disablePasswordAuthentication: true
     relationships:
       - type: cloudify.azure.relationships.contained_in_resource_group
@@ -279,17 +333,17 @@ node_templates:
 
 outputs:
 
-  Configure-Manager-and-Run-Example:
+  Bootstrap:
     value:
       Step0a-Upload-Key:
         concat:
         - 'cat '
-        - { concat: [ '~/.ssh/', { get_input: public_key_name } ] }
+        - { get_input: cloudify_key_file  }
         - ' | '
         - 'ssh -i '
-        - { concat: [ '~/.ssh/', { get_input: public_key_name } ] }
+        - { get_input: cloudify_key_file  }
         - ' '
-        - { get_input: cloudify_manager_host_username }
+        - { get_input: cloudify_image_username }
         - '@'
         - { get_attribute: [ cloudify_host, public_ip ] }
         - ' '''
@@ -298,9 +352,9 @@ outputs:
       Step0b-Install-Cloudify-CLI:
         concat:
         - 'ssh -t -i '
-        - { concat: [ '~/.ssh/', { get_input: public_key_name } ] }
+        - { get_input: cloudify_key_file  }
         - ' '
-        - { get_input: cloudify_manager_host_username }
+        - { get_input: cloudify_image_username }
         - '@'
         - { get_attribute: [ cloudify_host, public_ip ] }
         - ' '''
@@ -309,9 +363,9 @@ outputs:
       Step0c-Install-Cloudify-Manager:
         concat:
         - 'ssh -i '
-        - { concat: [ '~/.ssh/', { get_input: public_key_name } ] }
+        - { get_input: cloudify_key_file  }
         - ' '
-        - { get_input: cloudify_manager_host_username }
+        - { get_input: cloudify_image_username }
         - '@'
         - { get_attribute: [ cloudify_host, public_ip ] }
         - ' '''
@@ -320,42 +374,70 @@ outputs:
         - ' -i private_ip='
         - { get_attribute: [ cloudify_host, ip ] }
         - ' -i ssh_user='
-        - { get_input: cloudify_manager_host_username }
+        - { get_input: cloudify_image_username }
         - ' -i ssh_key_filename=~/.ssh/key.pem'
         - ' -i agents_user=ubuntu -i ignore_bootstrap_validations=false -i admin_username=admin -i admin_password=admin'
         - ''''
+
+  Configuration:
+    value:
       Step1-Initialize-Cloudify-Manager-CLI-Profile:
         concat:
           - 'cfy profiles use -s '
-          - { get_input: cloudify_manager_host_username }
+          - { get_input: cloudify_image_username }
           - ' -k '
-          - { concat: [ '~/.ssh/', { get_input: public_key_name } ] }
+          - { get_input: cloudify_key_file  }
           - ' -u admin -p admin -t default_tenant '
           - { get_attribute: [ cloudify_host, public_ip ] }
-      Step2-Upload-Azure-Plugin-Package-Centos: 'cfy plugins upload http://repository.cloudifysource.org/cloudify/wagons/cloudify-azure-plugin/1.4.1/cloudify_azure_plugin-1.4.1-py27-none-linux_x86_64-centos-Core.wgn'
+
+      Step2-Upload-Openstack-Plugin-Package-Centos: 'cfy plugins upload http://repository.cloudifysource.org/cloudify/wagons/cloudify-azure-plugin/1.4.1/cloudify_azure_plugin-1.4.1-py27-none-linux_x86_64-centos-Core.wgn'
       Step3-Upload-Diamond-Plugin-Package-Centos: 'cfy plugins upload http://repository.cloudifysource.org/cloudify/wagons/cloudify-diamond-plugin/1.3.5/cloudify_diamond_plugin-1.3.5-py27-none-linux_x86_64-centos-Core.wgn'
       Step4-Upload-Diamond-Plugin-Package-Ubuntu: 'cfy plugins upload http://repository.cloudifysource.org/cloudify/wagons/cloudify-diamond-plugin/1.3.5/cloudify_diamond_plugin-1.3.5-py27-none-linux_x86_64-Ubuntu-trusty.wgn'
+
       Step5-Create-Azure-Secrets:
-        concat:
-          - 'cfy secrets create -s '
-          - { get_input: subscription_id }
-          - ' subscription_id && cfy secrets create  -s '
-          - { get_input: tenant_id }
-          - ' tenant_id && cfy secrets create  -s '
-          - { get_input: client_id }
-          - ' client_id && cfy secrets create  -s '
-          - { get_input: client_secret }
-          - ' client_secret && cfy secrets create  -s '
-          - { get_input: location }
-          - ' location && cfy secrets create  -s '
-          - { get_attribute: [ resource_group, name ] }
-          - ' mgr_resource_group_name && cfy secrets create  -s '
-          - { get_attribute: [ virtual_network, name ] }
-          - ' mgr_virtual_network_name && cfy secrets create  -s '
-          - { get_attribute: [ subnet0, name ] }
-          - ' mgr_subnet_name && cfy secrets create  -s '
-          - ''''
-          - { get_attribute: [ key, public_key_export ] }
-          - ''''
-          - ' vm_os_username_public_key_data && cfy secrets create -s /home/cfyuser/.ssh/key.pem cloudify_manager_agent_key_path'
-      Step6-Execute-Nodecellar-Demo: 'cfy install https://github.com/cloudify-examples/nodecellar-auto-scale-auto-heal-blueprint/archive/4.0.zip -b demo -n azure-haproxy-blueprint.yaml'
+        First-group:
+          concat:
+            - 'cfy secrets create -s '
+            - { get_input: subscription_id }
+            - ' subscription_id && cfy secrets create  -s '
+            - { get_input: tenant_id }
+            - ' tenant_id && cfy secrets create  -s '
+            - { get_input: client_id }
+            - ' client_id && cfy secrets create  -s '
+            - { get_input: client_secret }
+            - ' client_secret && cfy secrets create  -s '
+            - { get_input: location }
+            - ' location && cfy secrets create  -s '
+            - { get_attribute: [ resource_group, name ] }
+            - ' mgr_resource_group_name && cfy secrets create  -s '
+            - { get_attribute: [ virtual_network, name ] }
+            - ' mgr_virtual_network_name && cfy secrets create  -s '
+            - { get_attribute: [ subnet0, name ] }
+            - ' mgr_subnet_name && cfy secrets create  -s '
+            - { get_input: ubuntu_trusty_image_publisher }
+            - ' ubuntu_trusty_image_publisher && cfy secrets create -s '
+            - { get_input: ubuntu_trusty_image_offer }
+            - ' ubuntu_trusty_image_offer && cfy secrets create -s '
+            - { get_input: ubuntu_trusty_image_sku }
+            - ' ubuntu_trusty_image_sku && cfy secrets create -s '
+            - { get_input: ubuntu_trusty_image_version }
+            - ' ubuntu_trusty_image_version && cfy secrets create -s '
+            - { get_input: small_image_size }
+            - ' small_image_size && cfy secrets create -s '
+            - ''''
+            - { get_attribute: [ agent_key, public_key_export ] }
+            - ''''
+            - ' agent_key_public'
+
+        # THIS DOESNT WORK
+        Second-group-REMOVE_BACKSLASHES_AROUND_COMMAND_KEEP_DOUBLE_QUOTES:
+          concat:
+            - 'cfy secrets create '
+            - 'agent_key_private -s '
+            - '"$(<'
+            - { concat: [ { get_input: local_ssh_directory }, { get_input: agent_key_name } ] }
+            - ')"'
+
+  Demo:
+    value:
+      Step6-Execute-Nodecellar-Demo: 'cfy install https://github.com/cloudify-examples/nodecellar-auto-scale-auto-heal-blueprint/archive/4.0.1.zip -b demo -n azure-haproxy-blueprint.yaml'
