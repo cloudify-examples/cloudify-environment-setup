@@ -21,8 +21,8 @@ if __name__ == '__main__':
     cloud_config_string = '#cloud-config\n' + cloud_config_string
     ctx.logger.debug('cloud_config_string: {0}'.format(cloud_config_string))
 
-    if ctx.node.properties.get('encode_base64'):
-        cloud_config_string = base64.b64encode(bytes(cloud_config_string, 'utf-8'))
+    if ctx.node.properties['resource_config'].get('encode_base64'):
+        cloud_config_string = base64.encodestring(cloud_config_string)
         ctx.logger.debug('cloud_config_string: {0}'.format(cloud_config_string))
 
     ctx.instance.runtime_properties['cloud_config'] = cloud_config_string
