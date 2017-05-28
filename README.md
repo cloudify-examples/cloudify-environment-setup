@@ -50,7 +50,7 @@ _Note: This command should be run from the same directory in which you extracted
 $ cfy install cloudify-environment-blueprint-latest/aws-blueprint.yaml \
     -i aws_secret_access_key=[INSERT_YOUR_AWS_SECRET_KEY] \
     -i aws_access_key_id=[INSERT_YOUR_AWS_ACCESS_KEY] \
-    --task-retries=30 --task-retry-interval=5
+    --task-retries=30 --task-retry-interval=5 --install-plugins
 ```
 
 
@@ -62,7 +62,7 @@ $ cfy install simple-infrastructure-blueprint/azure-blueprint.yaml \
     -i tenant_id=[INSERT_YOUR_AZURE_TENANT_ID] \
     -i client_id=[INSERT_YOUR_AZURE_CLIENT_ID] \
     -i client_secret=[INSERT_YOUR_AZURE_CLIENT_SECRET] \
-    --task-retries=30 --task-retry-interval=5
+    --task-retries=30 --task-retry-interval=5 --install-plugins
 ```
 
 
@@ -80,7 +80,7 @@ $ cfy install cloudify-environment-blueprint-latest/openstack-blueprint.yaml \
     -i ubuntu_trusty_id_examples=[INSERT_YOUR_OPENSTACK_UBUNTU_TRUSTY_IMAGE_ID] \
     -i small_openstack_image_flavor=[INSERT_YOUR_OPENSTACK_SMALL_IMAGE_FLAVOR_ID] \
     -i large_openstack_image_flavor=[INSERT_YOUR_OPENSTACK_LARGE_IMAGE_FLAVOR_ID] \
-    --task-retries=30 --task-retry-interval=5
+    --task-retries=30 --task-retry-interval=5 --install-plugins
 ```
 
 
@@ -101,7 +101,7 @@ $ cfy deployments outputs
   },
   "Configuration": {
     "Step1-Initialize-Cloudify-Manager-CLI-Profile": "cfy profiles use -s cfyuser -k ~/.ssh/cfy-manager-key -u admin -p admin -t default_tenant **.**.***.***",
-    "Step2-Upload-Openstack-Plugin-Package-Centos": "cfy plugins upload http://repository.cloudifysource.org/cloudify/wagons/cloudify-azure-plugin/1.4.1/cloudify_azure_plugin-1.4.1-py27-none-linux_x86_64-centos-Core.wgn",
+    "Step2-Upload-Azure-Plugin-Package-Centos": "cfy plugins upload http://repository.cloudifysource.org/cloudify/wagons/cloudify-azure-plugin/1.4.1/cloudify_azure_plugin-1.4.1-py27-none-linux_x86_64-centos-Core.wgn",
     "Step3-Upload-Diamond-Plugin-Package-Centos": "cfy plugins upload http://repository.cloudifysource.org/cloudify/wagons/cloudify-diamond-plugin/1.3.5/cloudify_diamond_plugin-1.3.5-py27-none-linux_x86_64-centos-Core.wgn",
     "Step4-Upload-Diamond-Plugin-Package-Ubuntu": "cfy plugins upload http://repository.cloudifysource.org/cloudify/wagons/cloudify-diamond-plugin/1.3.5/cloudify_diamond_plugin-1.3.5-py27-none-linux_x86_64-Ubuntu-trusty.wgn",
     "Step5-Create-Azure-Secrets": {
