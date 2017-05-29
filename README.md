@@ -268,11 +268,12 @@ $ cfy uninstall --allow-custom-parameters -p ignore_failure=true --task-retries=
 ```
 
 
-# Trouble-shooting
+# Troubleshooting
+
 
 ## 502 Bad Gateway
 
-If `cfy profiles use [IP]` fails with this output, trying restarting the VM.
+- If `cfy profiles use ...` fails with this output, the service has started in error state. Try restarting the VM.
 
 ```shell
 <head><title>502 Bad Gateway</title></head>
@@ -281,5 +282,15 @@ If `cfy profiles use [IP]` fails with this output, trying restarting the VM.
 <hr><center>nginx/1.8.0</center>
 </body>
 </html>
+```
+
+
+## [Errno 61] Connection refused
+
+- If `cfy profiles use ...` fails with the following output, then the server is refusing your connection because of too many requests. Most likely this is an issue with your network. Expect this issue to come up a lot until your network service improves.
+
+```shell
+Attempting to connect...
+HTTPConnectionPool(host='**.***.***.***', port=80): Max retries exceeded with url: /api/v3/provider/context (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x10d9d0590>: Failed to establish a new connection: [Errno 61] Connection refused',))
 ```
 
