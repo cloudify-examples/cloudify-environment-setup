@@ -47,7 +47,7 @@ _Note: This command should be run from the same directory in which you extracted
 #### For AWS run:
 
 ```shell
-$ cfy install cloudify-environment-blueprint-latest/aws-blueprint.yaml \
+$ cfy install cloudify-environment-setup-latest/aws-blueprint.yaml \
     -i aws_secret_access_key=[INSERT_YOUR_AWS_SECRET_KEY] \
     -i aws_access_key_id=[INSERT_YOUR_AWS_ACCESS_KEY] \
     --task-retries=30 --task-retry-interval=5 --install-plugins
@@ -57,7 +57,7 @@ $ cfy install cloudify-environment-blueprint-latest/aws-blueprint.yaml \
 #### For Azure run:
 
 ```shell
-$ cfy install simple-infrastructure-blueprint/azure-blueprint.yaml \
+$ cfy install cloudify-environment-setup-latest/azure-blueprint.yaml \
     -i subscription_id=[INSERT_YOUR_AZURE_SUBSCRIPTION_ID] \
     -i tenant_id=[INSERT_YOUR_AZURE_TENANT_ID] \
     -i client_id=[INSERT_YOUR_AZURE_CLIENT_ID] \
@@ -69,7 +69,7 @@ $ cfy install simple-infrastructure-blueprint/azure-blueprint.yaml \
 #### For Openstack run:
 
 ```shell
-$ cfy install cloudify-environment-blueprint-latest/openstack-blueprint.yaml \
+$ cfy install cloudify-environment-setup-latest/openstack-blueprint.yaml \
     -i username=[INSERT_YOUR_OPENSTACK_USERNAME] \
     -i password=[INSERT_YOUR_OPENSTACK_PASSWORD] \
     -i tenant_name=[INSERT_YOUR_OPENSTACK_TENANT_NAME] \
