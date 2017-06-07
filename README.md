@@ -86,6 +86,12 @@ $ cfy install cloudify-environment-setup-latest/openstack-blueprint.yaml \
 
 ### 3. Gather the information you need to configure your manager (or bootstrap and then configure). You can get that information from the `cfy deployments outputs` CLI command.
 
+#### For AWS run:
+```shell
+$ cfy deployments outputs -b /Users/xxxx/.cloudify/profiles/local/cloudify-environment-setup-latest/
+```
+
+#### For OpenStack run:
 ```shell
 $ cfy deployments outputs
 ```
