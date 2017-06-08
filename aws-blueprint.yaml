@@ -60,9 +60,7 @@ inputs:
     description: >
       A Cloudify Manager AMI. Default is for region us-east-1.
       For other regions, search Community AMIs: Cloudify Community 17.3.31.
-      If you choose to bootstrap, try: ami-ae7bfdb8.
-      For other regions, reference official CentOS 7 AMI.
-      See: https://wiki.centos.org/Cloud/AWS#head-78d1e3a4e6ba5c5a3847750d88266916ffe69648
+      If you choose to bootstrap, try: ami-6ed2fd04.
     default: ami-3b6c092d
 
   cloudify_instance_type:
@@ -348,7 +346,7 @@ node_templates:
             cloud_config:
               users:
               - name: { get_input: cloudify_image_username }
-                groups: sudo
+                primary-group: wheel
                 shell: /bin/bash
                 sudo: ['ALL=(ALL) NOPASSWD:ALL']
                 ssh-authorized-keys:
