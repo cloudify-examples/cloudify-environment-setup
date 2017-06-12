@@ -26,10 +26,10 @@ inputs:
     default: '~/.ssh/'
 
   manager_key_name:
-    default: cfy-manager-key
+    default: cfy-manager-key-aws
 
   agent_key_name:
-    default: cfy-agent-key
+    default: cfy-agent-key-aws
 
   cloudify_key_file:
     default: { concat: [ { get_input: local_ssh_directory }, { get_input: manager_key_name } ] }
@@ -60,7 +60,7 @@ inputs:
     description: >
       A Cloudify Manager AMI. Default is for region us-east-1.
       For other regions, search Community AMIs: Cloudify Community 17.3.31.
-      If you choose to bootstrap, try: ami-6ed2fd04.
+      If you choose to bootstrap, try: ami-0fbdf765, change cloudify_image_username: ec2-user, and change the block device from '/dev/sda1' to '/dev/sda'.
     default: ami-3b6c092d
 
   cloudify_instance_type:

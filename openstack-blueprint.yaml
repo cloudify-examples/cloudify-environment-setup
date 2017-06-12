@@ -29,10 +29,10 @@ inputs:
     default: '~/.ssh/'
 
   manager_key_name:
-    default: cfy-manager-key
+    default: cfy-manager-key-os
 
   agent_key_name:
-    default: cfy-agent-key
+    default: cfy-agent-key-os
 
   cloudify_key_file:
     default: { concat: [ { get_input: local_ssh_directory }, { get_input: manager_key_name } ] }
