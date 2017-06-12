@@ -76,10 +76,10 @@ $ cfy install cloudify-environment-setup-latest/openstack-blueprint.yaml \
     -i auth_url=[INSERT_YOUR_OPENSTACK_V2.0AUTH_URL] \
     -i region=[INSERT_YOUR_OPENSTACK_REGION] \
     -i external_network_name=[INSERT_YOUR_OPENSTACK_EXTERNAL_NETWORK_NAME] \
-    -i cloudify_image_id=[INSERT_YOUR_OPENSTACK_CENTOS_OR_CLOUDIFY_IMAGE_ID] \
-    -i ubuntu_trusty_id_examples=[INSERT_YOUR_OPENSTACK_UBUNTU_TRUSTY_IMAGE_ID] \
-    -i small_openstack_image_flavor=[INSERT_YOUR_OPENSTACK_SMALL_IMAGE_FLAVOR_ID] \
-    -i large_openstack_image_flavor=[INSERT_YOUR_OPENSTACK_LARGE_IMAGE_FLAVOR_ID] \
+    -i cloudify_image=[INSERT_YOUR_OPENSTACK_CENTOS_OR_CLOUDIFY_IMAGE_ID] \
+    -i ubuntu_trusty_image=[INSERT_YOUR_OPENSTACK_UBUNTU_TRUSTY_IMAGE_ID] \
+    -i small_image_flavor=[INSERT_YOUR_OPENSTACK_SMALL_IMAGE_FLAVOR_ID] \
+    -i large_image_flavor=[INSERT_YOUR_OPENSTACK_LARGE_IMAGE_FLAVOR_ID] \
     --task-retries=30 --task-retry-interval=5 --install-plugins
 ```
 
