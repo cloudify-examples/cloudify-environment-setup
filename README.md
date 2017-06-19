@@ -17,6 +17,7 @@ This blueprint sets up a reference environment for executing the Cloudify Exampl
   - [AWS Credentials](http://docs.aws.amazon.com/general/latest/gr/aws-sec-cred-types.html)
   - [Openstack Credentials](https://docs.openstack.org/user-guide/common/cli-set-environment-variables-using-openstack-rc.html) - *skip step 5 in those instructions -- do not "source" the file*.
   - [Azure Credentials](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-manager-api-authentication)
+  - [GCP Credentials](https://cloud.google.com/docs/authentication/getting-started)
 - A virtual environment application such as [virtualenv](https://virtualenv.pypa.io/en/stable/) installed on your computer.
 - [Cloudify CLI](http://docs.getcloudify.org/4.1.0/installation/from-packages/) installed in a virtual environment.
 
@@ -174,6 +175,12 @@ For Openstack run:
 
 ```shell
 $ cfy install cloudify-environment-setup-latest/openstack-blueprint.yaml -i cloudify-environment-setup-latest/inputs/openstack.yaml --install-plugins
+```
+
+For GCP run:
+
+```shell
+$ cfy install cloudify-environment-setup-latest/gcp-blueprint.yaml -i cloudify-environment-setup-latest/inputs/gcp.yaml --install-plugins
 ```
 
 
