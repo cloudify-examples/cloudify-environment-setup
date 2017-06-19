@@ -243,20 +243,3 @@ node_templates:
       target: network_subnet0_staticip
     - type: cloudify.gcp.relationships.instance_connected_to_keypair
       target: controller_key
-
-outputs:
-
-  1-Instructions:
-    value: { get_attribute: [ ManagerSetup, final_path ] }
-  2-Demo:
-    value: ' '
-  a.:
-    value: 'Download https://github.com/Cloudify-PS/nodecellar-auto-scale-auto-heal-blueprint/archive/gcp_blueprint.zip'
-  b.:
-    value: 'Unzip gcp_blueprint.zip'
-  c.:
-    value: 'Run cd nodecellar-auto-scale-auto-heal-blueprint-gcp_blueprint'
-  d.:
-    value: 'Add the gcp_auth file content to gcp-blueprint.yaml in auth under dsl_definitions'
-  e.:
-    value: 'Run cfy install gcp-blueprint.yaml -b demo'

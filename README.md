@@ -143,7 +143,7 @@ You will find a list of pre-bootstrapped images on [Cloudify's Downloads page](h
     Also, change the "bootstrap: True" to "False" in your inputs file.
   - Openstack: Follow [these instructions](https://docs.openstack.org/user-guide/dashboard-manage-images.html) to upload the [Openstack QCOW image](https://repository.cloudifysource.org/cloudify/4.1.1/ga-release/cloudify-enterprise-manager-4.1.1ga.qcow2) to Openstack.
     You will also need to find the correct values for cloudify_image, centos_core_image, ubuntu_trusty_image, small_image_flavor, large_image_flavor. Ask your Openstack Admin for more info on these.
-  - Azure: There is not currently a pre-bootstrapped image for Azure, so bootstrap is the only option.
+  - Azure & GCP: There is not currently a pre-bootstrapped image for Azure and GCP, so bootstrap is the only option.
 
 
 
