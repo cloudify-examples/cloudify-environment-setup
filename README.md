@@ -19,6 +19,7 @@ Cloudify Manager can be used in any environment, whether cloud, baremetal, or a 
   - [AWS Credentials](http://docs.aws.amazon.com/general/latest/gr/aws-sec-cred-types.html)
   - [Openstack Credentials](https://docs.openstack.org/user-guide/common/cli-set-environment-variables-using-openstack-rc.html) - *skip step 5 in those instructions -- do not "source" the file*.
   - [Azure Credentials](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-manager-api-authentication)
+  - [GCP Credentials](https://cloud.google.com/docs/authentication/getting-started)
 - [Cloudify CLI](http://docs.getcloudify.org/4.1.0/installation/from-packages/) installed on your computer.
 
 
@@ -34,7 +35,7 @@ Cloudify Manager can be used in any environment, whether cloud, baremetal, or a 
       You may also find links [here](http://cloudify.co/thank_you_aws_ent).
     - Openstack: Follow [these instructions](https://docs.openstack.org/user-guide/dashboard-manage-images.html) to upload the [Openstack QCOW image](http://cloudify.co/downloads/get_cloudify.html) to Openstack.
       You will also need to find the correct values for cloudify_image, centos_core_image, ubuntu_trusty_image, small_image_flavor, large_image_flavor. Ask your Openstack Admin for more info on these.
-    - Azure: There is not currently a pre-bootstrapped image for Azure, so bootstrap is the only option.
+    - Azure: There is not currently a pre-bootstrapped image for Azure and GCP, so bootstrap is the only option.
   * Bootstrap
 
     To execute bootstrap, add ```bootstrap: True``` as a single line to your `inputs.yaml` file.
@@ -71,6 +72,17 @@ $ cfy install cloudify-environment-setup-4.1/openstack-blueprint.yaml -i cloudif
 ```
 
 
+#### For GCP run:
+
+```shell
+$ cfy install cloudify-environment-setup-latest/gcp-blueprint.yaml \
+    -i gcp_auth=[INSERT_PATH_TO_YOUR_GCP_AUTH_JSON_FILE] \
+    -i project=[INSERT_YOUR_GCP_PROJECT_ID] \
+    -i zone=[INSERT_YOUR_GCP_ZONE] \
+    --task-retries=30 --task-retry-interval=5 --install-plugins
+```
+
+
 ## 3. Configure or Bootstrap (and then configure) your Cloudify Manager.
 
 
@@ -91,7 +103,7 @@ The output should look similar to:
 
 ```json
 {
-  "Demo": "cfy install https://github.com/cloudify-examples/nodecellar-auto-scale-auto-heal-blueprint/archive/4.0.1.zip -b demo -n azure-blueprint.yaml",
+  "Demo": "cfy install https://github.com/cloudify-examples/nodecellar-auto-scale-auto-heal-blueprint/archive/4.1.zip -b demo -n azure-blueprint.yaml",
   "Instructions": "/home/bob/latest/instructions.txt"
 }
 ```
