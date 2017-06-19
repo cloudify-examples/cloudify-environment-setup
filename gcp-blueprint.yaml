@@ -1,0 +1,300 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+imports:
+  - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/4.0.1/resources/rest-service/cloudify/types/types.yaml
+  - http://getcloudify.org.s3.amazonaws.com/spec/gcp-plugin/1.0/plugin.yaml
+  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.2.1/plugin.yaml
+
+inputs:
+
+  gcp_auth:
+    description: PATH TO YOUR GCP AUTH JSON FILE
+
+  project:
+    description: YOUR GCP PROJECT ID
+
+  zone:
+    default: us-east1-b
+
+  subnet_region:
+    default: us-east1
+
+  staticip_region:
+    default: us-east1
+
+  network_subnet0_cidr:
+    default: 10.11.12.0/22
+
+  network_subnet1_cidr:
+    default: 10.11.16.0/22
+
+  resource_prefix:
+    default: cfy
+
+  cloudify_image_username:
+    default: centos
+
+  local_ssh_directory:
+    default: '~/.ssh/'
+
+  manager_key_name:
+    default: cfy-manager-key
+
+  agent_key_name:
+    default: cfy-agent-key
+
+  cloudify_key_file:
+    default: { concat: [ { get_input: local_ssh_directory }, { get_input: manager_key_name } ] }
+
+  cloudify_key_file_pub:
+    default: { concat: [ { get_input: local_ssh_directory }, { get_input: agent_key_name } ] }
+
+  cloudify_image:
+    default: https://www.googleapis.com/compute/v1/projects/centos-cloud/global/images/centos-7-v20170523
+
+  cloudify_instance_type:
+    default: n1-standard-2
+
+  ubuntu_trusty_image:
+    default: https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-1404-trusty-v20170517
+
+dsl_definitions:
+  client_config: &client_config
+    auth: { get_input: gcp_auth }
+    project: { get_input: project }
+    zone: { get_input: zone }
+
+node_templates:
+
+  manager_key:
+    type: cloudify.keys.nodes.RSAKey
+    properties:
+      resource_config:
+        public_key_path: { concat: [ { get_input: local_ssh_directory }, { get_input: manager_key_name }, '.pub' ] }
+        private_key_path: { concat: [ { get_input: local_ssh_directory }, { get_input: manager_key_name } ] }
+        openssh_format: true
+      use_secret_store: false
+      key_name: { get_input: manager_key_name }
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: keys.cloudify_ssh_key.operations.create
+          inputs:
+            store_private_key_material: true
+
+  agent_key:
+    type: cloudify.keys.nodes.RSAKey
+    properties:
+      resource_config:
+        public_key_path: { concat: [ { get_input: local_ssh_directory }, { get_input: agent_key_name }, '.pub' ] }
+        private_key_path: { concat: [ { get_input: local_ssh_directory }, { get_input: agent_key_name } ] }
+        openssh_format: true
+      use_secret_store: false
+      key_name: { get_input: agent_key_name }
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: keys.cloudify_ssh_key.operations.create
+          inputs:
+            store_private_key_material: true
+
+  network_subnet0_staticip:
+    type: cloudify.gcp.nodes.Address
+    properties:
+      region: { get_input: staticip_region }
+      gcp_config: *client_config
+      name: { concat: [ { get_input: resource_prefix }, 's0ip0' ] }
+      additional_settings:
+
+  network:
+    type: cloudify.gcp.nodes.Network
+    properties:
+      gcp_config: *client_config
+      name: { concat: [ { get_input: resource_prefix }, 'network' ] }
+      auto_subnets: false
+
+  network_subnet0:
+    type: cloudify.gcp.nodes.SubNetwork
+    properties:
+      gcp_config: *client_config
+      name: { concat: [ { get_input: resource_prefix }, 'network_subnet0' ] }
+      subnet: { get_input: network_subnet0_cidr }
+      region: { get_input: subnet_region }
+    relationships:
+    - type: cloudify.gcp.relationships.contained_in_network
+      target: network
+
+  network_subnet1:
+    type: cloudify.gcp.nodes.SubNetwork
+    properties:
+      gcp_config: *client_config
+      name: { concat: [ { get_input: resource_prefix }, 'network_subnet1' ] }
+      subnet: { get_input: network_subnet1_cidr }
+      region: { get_input: subnet_region }
+    relationships:
+    - type: cloudify.gcp.relationships.contained_in_network
+      target: network
+
+  cloudify_security_group:
+    type: cloudify.gcp.nodes.FirewallRule
+    properties:
+      gcp_config: *client_config
+      name: { concat: [ { get_input: resource_prefix }, 'cloudify_security_group' ] }
+      sources:
+        - 0.0.0.0/0
+      allowed:
+        tcp: [22, 80, 443]
+        icmp:
+    relationships:
+      - type: cloudify.relationships.connected_to
+        target: network
+
+  cloudify_security_group1:
+    type: cloudify.gcp.nodes.FirewallRule
+    properties:
+      gcp_config: *client_config
+      name: { concat: [ { get_input: resource_prefix }, 'cloudify_security_group1' ] }
+      sources:
+        - { get_property: [ network_subnet0, subnet ] }
+        - { get_property: [ network_subnet1, subnet ] }
+      allowed:
+        tcp: [5671, 8101, 53333, 8300, 8301, 8500, 22000, 15432]
+    relationships:
+      - type: cloudify.relationships.connected_to
+        target: network
+
+  controller_key:
+    type: cloudify.gcp.nodes.KeyPair
+    properties:
+      use_external_resource: true
+      gcp_config: *client_config
+      private_key_path: { get_property: [ manager_key, resource_config, private_key_path ] }
+      public_key_path: { get_property: [ manager_key, resource_config, public_key_path ] }
+      user: { get_input: cloudify_image_username }
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: manager_key
+
+  cloudify_host:
+    type: cloudify.gcp.nodes.Instance
+    properties:
+      name: { concat: [ { get_input: resource_prefix }, 'cloudify_host' ] }
+      gcp_config: *client_config
+      image_id: { get_input: cloudify_image }
+      instance_type: { get_input: cloudify_instance_type }
+      zone: { get_input: zone }
+      install_agent: false
+    relationships:
+    - type: cloudify.gcp.relationships.contained_in_network
+      target: network_subnet0
+    - type: cloudify.gcp.relationships.instance_connected_to_ip
+      target: network_subnet0_staticip
+    - type: cloudify.gcp.relationships.instance_connected_to_keypair
+      target: controller_key
+
+outputs:
+
+  Bootstrap:
+    value:
+      Step0a-Upload-Key:
+        concat:
+        - 'cat '
+        - { get_input: cloudify_key_file  }
+        - ' | '
+        - 'sudo ssh -i '
+        - { get_input: cloudify_key_file  }
+        - ' '
+        - { get_input: cloudify_image_username }
+        - '@'
+        - { get_attribute: [ network_subnet0_staticip, address ] }
+        - ' '''
+        - 'cat >> ~/.ssh/key.pem && chmod 600 ~/.ssh/key.pem'
+        - ''''
+      Step0b-Copy-GCP-Auth-File:
+        concat:
+          - 'sudo scp -i '
+          - { get_input: cloudify_key_file  }
+          - ' '
+          - { get_input: gcp_auth }
+          - ' '
+          - { get_input: cloudify_image_username }
+          - '@'
+          - { get_attribute: [ network_subnet0_staticip, address ] }
+          - ':~/'
+      Step0c-Install-Cloudify-CLI:
+        concat:
+        - 'ssh -t -i '
+        - { get_input: cloudify_key_file  }
+        - ' '
+        - { get_input: cloudify_image_username }
+        - '@'
+        - { get_attribute: [ network_subnet0_staticip, address ] }
+        - ' '''
+        - 'sudo rpm -i http://repository.cloudifysource.org/cloudify/4.0.1/sp-release/cloudify-4.0.1~sp.el6.x86_64.rpm'
+        - ''''
+      Step0d-Install-Cloudify-Manager:
+        concat:
+        - 'ssh -i '
+        - { get_input: cloudify_key_file  }
+        - ' '
+        - { get_input: cloudify_image_username }
+        - '@'
+        - { get_attribute: [ network_subnet0_staticip, address ] }
+        - ' '''
+        - 'cfy bootstrap --install-plugins /opt/cfy/cloudify-manager-blueprints/simple-manager-blueprint.yaml -i public_ip='
+        - { get_attribute: [ network_subnet0_staticip, address ] }
+        - ' -i private_ip='
+        - { get_attribute: [ cloudify_host, ip ] }
+        - ' -i ssh_user='
+        - { get_input: cloudify_image_username }
+        - ' -i ssh_key_filename=~/.ssh/key.pem'
+        - ' -i agents_user=ubuntu -i ignore_bootstrap_validations=false -i admin_username=admin -i admin_password=admin'
+        - ''''
+
+  Configuration:
+    value:
+      Step1-Initialize-Cloudify-Manager-CLI-Profile:
+        concat:
+          - 'cfy profiles use -s '
+          - { get_input: cloudify_image_username }
+          - ' -k '
+          - { get_input: cloudify_key_file }
+          - ' -u admin -p admin -t default_tenant '
+          - { get_attribute: [ network_subnet0_staticip, address ] }
+      Step2-Upload-GCP-Plugin-Package-Centos: 'cfy plugins upload http://repository.cloudifysource.org/cloudify/wagons/cloudify-gcp-plugin/1.0/cloudify_gcp_plugin-1.0-py27-none-linux_x86_64-centos-Core.wgn'
+      Step3-Upload-Diamond-Plugin-Package-Centos: 'cfy plugins upload http://repository.cloudifysource.org/cloudify/wagons/cloudify-diamond-plugin/1.3.5/cloudify_diamond_plugin-1.3.5-py27-none-linux_x86_64-centos-Core.wgn'
+      Step4-Upload-Diamond-Plugin-Package-Ubuntu: 'cfy plugins upload http://repository.cloudifysource.org/cloudify/wagons/cloudify-diamond-plugin/1.3.5/cloudify_diamond_plugin-1.3.5-py27-none-linux_x86_64-Ubuntu-trusty.wgn'
+      Step5-Create-GCP-Secrets:
+        First-group:
+          concat:
+            - 'cfy secrets create -s /home/centos/GCP-AUTH-FILE.json'
+            - ' gcp_auth && cfy secrets create  -s '
+            - { get_input: project }
+            - ' project && cfy secrets create  -s '
+            - { get_property: [ network, name ] }
+            - ' network && cfy secrets create  -s '
+            - { get_input: zone }
+            - ' zone && cfy secrets create  -s '
+            - { get_input: ubuntu_trusty_image }
+            - ' ubuntu_trusty_image && cfy secrets create -s '
+            - { get_input: cloudify_instance_type }
+            - ' cloudify_instance_type'
+
+        # THIS DOESNT WORK
+        Second-group-REMOVE_BACKSLASHES_AROUND_COMMAND_KEEP_DOUBLE_QUOTES:
+          concat:
+            - 'cfy secrets create '
+            - 'agent_key_private -s '
+            - '"$(<'
+            - { concat: [ { get_input: local_ssh_directory }, { get_input: agent_key_name } ] }
+            - ')"'
+
+  Demo:
+    value:
+      Step6-Execute-Nodecellar-Demo:
+        concat:
+          - 'cfy blueprints upload examples/gcp-simple-blueprint.yaml -b demo'
+          - ''''
+          - 'cfy deployments create -b demo'
+          - ''''
+          - 'cfy executions start install -d demo'
