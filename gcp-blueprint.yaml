@@ -16,7 +16,10 @@ inputs:
   zone:
     default: us-east1-b
 
-  region:
+  subnet_region:
+    default: us-east1
+
+  staticip_region:
     default: us-east1
 
   network_subnet0_cidr:
@@ -98,9 +101,10 @@ node_templates:
   network_subnet0_staticip:
     type: cloudify.gcp.nodes.Address
     properties:
-      region: { get_input: region }
+      region: { get_input: staticip_region }
       gcp_config: *client_config
       name: { concat: [ { get_input: resource_prefix }, 's0ip0' ] }
+      additional_settings:
 
   network:
     type: cloudify.gcp.nodes.Network
@@ -115,7 +119,7 @@ node_templates:
       gcp_config: *client_config
       name: { concat: [ { get_input: resource_prefix }, 'network_subnet0' ] }
       subnet: { get_input: network_subnet0_cidr }
-      region: { get_input: region }
+      region: { get_input: subnet_region }
     relationships:
     - type: cloudify.gcp.relationships.contained_in_network
       target: network
@@ -126,7 +130,7 @@ node_templates:
       gcp_config: *client_config
       name: { concat: [ { get_input: resource_prefix }, 'network_subnet1' ] }
       subnet: { get_input: network_subnet1_cidr }
-      region: { get_input: region }
+      region: { get_input: subnet_region }
     relationships:
     - type: cloudify.gcp.relationships.contained_in_network
       target: network
