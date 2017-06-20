@@ -16,10 +16,7 @@ inputs:
   zone:
     default: us-east1-b
 
-  subnet_region:
-    default: us-east1
-
-  staticip_region:
+  region:
     default: us-east1
 
   network_subnet0_cidr:
@@ -101,10 +98,9 @@ node_templates:
   network_subnet0_staticip:
     type: cloudify.gcp.nodes.Address
     properties:
-      region: { get_input: staticip_region }
+      region: { get_input: region }
       gcp_config: *client_config
       name: { concat: [ { get_input: resource_prefix }, 's0ip0' ] }
-      additional_settings:
 
   network:
     type: cloudify.gcp.nodes.Network
@@ -119,7 +115,7 @@ node_templates:
       gcp_config: *client_config
       name: { concat: [ { get_input: resource_prefix }, 'network_subnet0' ] }
       subnet: { get_input: network_subnet0_cidr }
-      region: { get_input: subnet_region }
+      region: { get_input: region }
     relationships:
     - type: cloudify.gcp.relationships.contained_in_network
       target: network
@@ -130,7 +126,7 @@ node_templates:
       gcp_config: *client_config
       name: { concat: [ { get_input: resource_prefix }, 'network_subnet1' ] }
       subnet: { get_input: network_subnet1_cidr }
-      region: { get_input: subnet_region }
+      region: { get_input: region }
     relationships:
     - type: cloudify.gcp.relationships.contained_in_network
       target: network
@@ -183,7 +179,8 @@ node_templates:
       image_id: { get_input: cloudify_image }
       instance_type: { get_input: cloudify_instance_type }
       zone: { get_input: zone }
-      install_agent: false
+      agent_config:
+        install_method: none
     relationships:
     - type: cloudify.gcp.relationships.contained_in_network
       target: network_subnet0
@@ -275,6 +272,12 @@ outputs:
             - ' network && cfy secrets create  -s '
             - { get_input: zone }
             - ' zone && cfy secrets create  -s '
+            - { get_input: region }
+            - ' region && cfy secrets create  -s '
+            - { get_property: [ network_subnet0, name ] }
+            - ' public_subnet_name && cfy secrets create  -s '
+            - { get_property: [ network_subnet1, name ] }
+            - ' private_subnet_name && cfy secrets create -s '
             - { get_input: ubuntu_trusty_image }
             - ' ubuntu_trusty_image && cfy secrets create -s '
             - { get_input: cloudify_instance_type }
