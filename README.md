@@ -294,3 +294,12 @@ Attempting to connect...
 HTTPConnectionPool(host='**.***.***.***', port=80): Max retries exceeded with url: /api/v3/provider/context (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x10d9d0590>: Failed to establish a new connection: [Errno 61] Connection refused',))
 ```
 
+
+## Connection aborted, BadStatusLine
+
+- If `cfy profiles use ...` fails with the following output, check the internet connection.
+
+```shell
+Attempting to connect...
+Can't use manager 34.226.3.116. ('Connection aborted.', BadStatusLine("''",))
+```
