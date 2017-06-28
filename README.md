@@ -7,11 +7,11 @@ _Note: Ignoring a number of factors, the following steps should take 20 - 40 min
 
 To ask a question or report an issue, please use [github issues](https://github.com/cloudify-examples/nodecellar-auto-scale-auto-heal-blueprint/issues) or visit the [Cloudify users groups](https://groups.google.com/forum/#!forum/cloudify-users).
 
-
 ### purpose
 
 Cloudify Manager is designed to work in any environment, whether cloud, baremetal, or a hybrid of the two. This blueprint will deploy the reference environment that is used by other examples.
 
+** #### Use the following links for the most detailed instructions on both [Manager Image Installation](http://cloudify.co/2017/06/07/installing-cloudify-4-aws-openstack-simple-step-by-step-tutorial.html) and [Bootstrapping](http://cloudify.co/2017/06/22/bootstrapping-cloudify-4-openstack-aws-azure-simple-step-by-step-tutorial.html). **
 
 ## pre-requisites
 
@@ -22,7 +22,7 @@ Cloudify Manager is designed to work in any environment, whether cloud, baremeta
 - [Cloudify CLI](http://docs.getcloudify.org/4.0.0/installation/from-packages/) installed on your computer.
 
 
-# preparation
+## preparation
 
 Decide how you want to install your manager. There are two options:
 
