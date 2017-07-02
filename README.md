@@ -19,6 +19,7 @@ Cloudify Manager is designed to work in any environment, whether cloud, baremeta
   - [AWS Credentials](http://docs.aws.amazon.com/general/latest/gr/aws-sec-cred-types.html)
   - [Openstack Credentials](https://docs.openstack.org/user-guide/common/cli-set-environment-variables-using-openstack-rc.html) - *skip step 5 in those instructions -- do not "source" the file*.
   - [Azure Credentials](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-manager-api-authentication)
+  - [GCP Credentials](https://cloud.google.com/docs/authentication/getting-started)
 - [Cloudify CLI](http://docs.getcloudify.org/4.0.0/installation/from-packages/) installed on your computer.
 
 
@@ -31,7 +32,7 @@ Decide how you want to install your manager. There are two options:
 * Using a pre-bootstrapped image. You will find a list of pre-bootstrapped images on [Cloudify's Downloads page](http://cloudify.co/downloads/get_cloudify.html).
   - The current AWS AMIs are listed [here](http://cloudify.co/thank_you_aws_ent) by region.
   - Follow [these instructions](https://docs.openstack.org/user-guide/dashboard-manage-images.html) to upload the [Openstack QCOW image](http://cloudify.co/downloads/get_cloudify.html) to Openstack.
-  - There is not currently a pre-bootstrapped image for Azure, so bootstrap is the only option.
+  - There is not currently a pre-bootstrapped image for Azure and GCP, so bootstrap is the only option.
 
 
 # instructions
@@ -80,6 +81,17 @@ $ cfy install cloudify-environment-setup-latest/openstack-blueprint.yaml \
     -i ubuntu_trusty_image=[INSERT_YOUR_OPENSTACK_UBUNTU_TRUSTY_IMAGE_ID] \
     -i small_image_flavor=[INSERT_YOUR_OPENSTACK_SMALL_IMAGE_FLAVOR_ID] \
     -i large_image_flavor=[INSERT_YOUR_OPENSTACK_LARGE_IMAGE_FLAVOR_ID] \
+    --task-retries=30 --task-retry-interval=5 --install-plugins
+```
+
+
+#### For GCP run:
+
+```shell
+$ cfy install cloudify-environment-setup-latest/gcp-blueprint.yaml \
+    -i gcp_auth=[INSERT_PATH_TO_YOUR_GCP_AUTH_JSON_FILE] \
+    -i project=[INSERT_YOUR_GCP_PROJECT_ID] \
+    -i zone=[INSERT_YOUR_GCP_ZONE] \
     --task-retries=30 --task-retry-interval=5 --install-plugins
 ```
 
