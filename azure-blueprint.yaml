@@ -4,6 +4,7 @@ imports:
   - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/4.1/resources/rest-service/cloudify/types/types.yaml
   - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-azure-plugin/1.4.3/plugin.yaml
   - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.2.1/plugin.yaml
+  - imports/manager-configuration.yaml
 
 inputs:
 
@@ -36,10 +37,10 @@ inputs:
 
   cloudify_image:
     default:
-      publisher: OpenLogic
-      offer: CentOS
-      sku: '7.3'
-      version: latest
+      publisher: { get_input: centos_core_image_publisher }
+      offer: { get_input: centos_core_image_offer }
+      sku: { get_input: centos_core_image_sku }
+      version: { get_input: centos_core_image_version }
 
   local_ssh_directory:
     default: '~/.ssh/'
@@ -53,6 +54,18 @@ inputs:
   cloudify_key_file:
     default: { concat: [ { get_input: local_ssh_directory }, { get_input: manager_key_name } ] }
 
+  centos_core_image_publisher:
+    default: OpenLogic
+
+  centos_core_image_offer:
+    default: CentOS
+
+  centos_core_image_sku:
+    default: '7.3'
+
+  centos_core_image_version:
+    default: latest
+
   ubuntu_trusty_image_publisher:
     default: Canonical
 
@@ -65,8 +78,84 @@ inputs:
   ubuntu_trusty_image_version:
     default: 14.04.201604060
 
+  large_image_size:
+    default: Standard_A4
+
   small_image_size:
     default: Standard_A0
+
+  manager_ip:
+    description: >
+      Resolving the IP for manager setup.
+    default: { get_attribute: [ cloudify_host, public_ip ] }
+
+  plugin_urls:
+    description: >
+      Plugins used in AWS blueprint examples.
+    default:
+    - https://github.com/cloudify-incubator/cloudify-utilities-plugin/releases/download/1.2.5/cloudify_utilities_plugin-1.2.5-py27-none-linux_x86_64-centos-Core.wgn
+    - http://repository.cloudifysource.org/cloudify/wagons/cloudify-azure-plugin/1.4.1/cloudify_azure_plugin-1.4.1-py27-none-linux_x86_64-centos-Core.wgn
+    - https://github.com/cloudify-incubator/cloudify-azure-plugin/releases/download/1.4.3/cloudify_azure_plugin-1.4.3-py27-none-linux_x86_64.wgn
+    - http://repository.cloudifysource.org/cloudify/wagons/cloudify-diamond-plugin/1.3.5/cloudify_diamond_plugin-1.3.5-py27-none-linux_x86_64-centos-Core.wgn
+    - http://repository.cloudifysource.org/cloudify/wagons/cloudify-diamond-plugin/1.3.5/cloudify_diamond_plugin-1.3.5-py27-none-linux_x86_64-Ubuntu-trusty.wgn
+
+  secrets:
+    description: >
+      key, value pairs of secrets used in AWS blueprint examples.
+    default:
+    - key: subscription_id
+      value: { get_input: subscription_id }
+    - key: tenant_id
+      value: { get_input: tenant_id }
+    - key: client_id
+      value: { get_input: client_id }
+    - key: client_secret
+      value: { get_input: client_secret }
+    - key: location
+      value: { get_input: location }
+    - key: mgr_resource_group_name
+      value: { get_attribute: [ resource_group, name ] }
+    - key: mgr_virtual_network_name
+      value: { get_attribute: [ virtual_network, name ] }
+    - key: mgr_subnet_name
+      value: { get_attribute: [ subnet0, name ] }
+    - key: ubuntu_trusty_image_publisher
+      value: { get_input: ubuntu_trusty_image_publisher }
+    - key: ubuntu_trusty_image_offer
+      value: { get_input: ubuntu_trusty_image_offer }
+    - key: ubuntu_trusty_image_sku
+      value: { get_input: ubuntu_trusty_image_sku }
+    - key: ubuntu_trusty_image_version
+      value: { get_input: ubuntu_trusty_image_version }
+    - key: centos_core_image_publisher
+      value: { get_input: centos_core_image_publisher }
+    - key: centos_core_image_offer
+      value: { get_input: centos_core_image_offer }
+    - key: centos_core_image_sku
+      value: { get_input: centos_core_image_sku }
+    - key: centos_core_image_version
+      value: { get_input: centos_core_image_version }
+    - key: small_image_size
+      value: { get_input: small_image_size }
+    - key: large_image_size
+      value: { get_input: large_image_size }
+    - key: agent_key_public
+      value: { get_attribute: [ agent_key, public_key_export ] }
+    - key: agent_key_private
+      value: { get_attribute: [ agent_key, private_key_export ] }
+
+  create_inputs:
+    default:
+      local_private_key: { get_input: cloudify_key_file  }
+      rpm_package: { get_input: cli_package_url }
+      public_ip: { get_input: manager_ip }
+      private_ip: { get_attribute: [ cloudify_host, ip ] }
+      ssh_user: { get_input: cloudify_image_username }
+      ssh_key_filename:
+        concat:
+        - '/home/'
+        - { get_input: cloudify_image_username }
+        - '/.ssh/key.pem'
 
 dsl_definitions:
 
@@ -75,15 +164,6 @@ dsl_definitions:
     tenant_id: { get_input: tenant_id }
     client_id: { get_input: client_id }
     client_secret: { get_input: client_secret }
-
-node_types:
-
-  cloudify.nodes.CloudConfig:
-    derived_from: cloudify.nodes.Root
-    properties:
-      resource_config:
-        default:
-          encode_base64: false
 
 node_templates:
 
@@ -308,7 +388,7 @@ node_templates:
           inputs:
             args:
               hardwareProfile:
-                vmSize: Standard_A4
+                vmSize: { get_input: large_image_size }
               storageProfile:
                 imageReference: { get_input: cloudify_image }
               osProfile:
@@ -333,111 +413,7 @@ node_templates:
 
 outputs:
 
-  Bootstrap:
-    value:
-      Step0a-Upload-Key:
-        concat:
-        - 'cat '
-        - { get_input: cloudify_key_file  }
-        - ' | '
-        - 'ssh -i '
-        - { get_input: cloudify_key_file  }
-        - ' '
-        - { get_input: cloudify_image_username }
-        - '@'
-        - { get_attribute: [ cloudify_host, public_ip ] }
-        - ' '''
-        - 'cat >> ~/.ssh/key.pem && chmod 600 ~/.ssh/key.pem'
-        - ''''
-      Step0b-Install-Cloudify-CLI:
-        concat:
-        - 'ssh -t -i '
-        - { get_input: cloudify_key_file  }
-        - ' '
-        - { get_input: cloudify_image_username }
-        - '@'
-        - { get_attribute: [ cloudify_host, public_ip ] }
-        - ' '''
-        - 'sudo rpm -i http://repository.cloudifysource.org/cloudify/4.0.1/sp-release/cloudify-4.0.1~sp.el6.x86_64.rpm'
-        - ''''
-      Step0c-Install-Cloudify-Manager:
-        concat:
-        - 'ssh -i '
-        - { get_input: cloudify_key_file  }
-        - ' '
-        - { get_input: cloudify_image_username }
-        - '@'
-        - { get_attribute: [ cloudify_host, public_ip ] }
-        - ' '''
-        - 'cfy bootstrap --install-plugins /opt/cfy/cloudify-manager-blueprints/simple-manager-blueprint.yaml -i public_ip='
-        - { get_attribute: [ cloudify_host, public_ip ] }
-        - ' -i private_ip='
-        - { get_attribute: [ cloudify_host, ip ] }
-        - ' -i ssh_user='
-        - { get_input: cloudify_image_username }
-        - ' -i ssh_key_filename=~/.ssh/key.pem'
-        - ' -i agents_user=ubuntu -i ignore_bootstrap_validations=false -i admin_username=admin -i admin_password=admin'
-        - ''''
-
-  Configuration:
-    value:
-      Step1-Initialize-Cloudify-Manager-CLI-Profile:
-        concat:
-          - 'cfy profiles use -s '
-          - { get_input: cloudify_image_username }
-          - ' -k '
-          - { get_input: cloudify_key_file  }
-          - ' -u admin -p admin -t default_tenant '
-          - { get_attribute: [ cloudify_host, public_ip ] }
-
-      Step2-Upload-Azure-Plugin-Package-Centos: 'cfy plugins upload http://repository.cloudifysource.org/cloudify/wagons/cloudify-azure-plugin/1.4.1/cloudify_azure_plugin-1.4.1-py27-none-linux_x86_64-centos-Core.wgn'
-      Step3-Upload-Diamond-Plugin-Package-Centos: 'cfy plugins upload http://repository.cloudifysource.org/cloudify/wagons/cloudify-diamond-plugin/1.3.5/cloudify_diamond_plugin-1.3.5-py27-none-linux_x86_64-centos-Core.wgn'
-      Step4-Upload-Diamond-Plugin-Package-Ubuntu: 'cfy plugins upload http://repository.cloudifysource.org/cloudify/wagons/cloudify-diamond-plugin/1.3.5/cloudify_diamond_plugin-1.3.5-py27-none-linux_x86_64-Ubuntu-trusty.wgn'
-
-      Step5-Create-Azure-Secrets:
-        First-group:
-          concat:
-            - 'cfy secrets create -s '
-            - { get_input: subscription_id }
-            - ' subscription_id && cfy secrets create  -s '
-            - { get_input: tenant_id }
-            - ' tenant_id && cfy secrets create  -s '
-            - { get_input: client_id }
-            - ' client_id && cfy secrets create  -s '
-            - { get_input: client_secret }
-            - ' client_secret && cfy secrets create  -s '
-            - { get_input: location }
-            - ' location && cfy secrets create  -s '
-            - { get_attribute: [ resource_group, name ] }
-            - ' mgr_resource_group_name && cfy secrets create  -s '
-            - { get_attribute: [ virtual_network, name ] }
-            - ' mgr_virtual_network_name && cfy secrets create  -s '
-            - { get_attribute: [ subnet0, name ] }
-            - ' mgr_subnet_name && cfy secrets create  -s '
-            - { get_input: ubuntu_trusty_image_publisher }
-            - ' ubuntu_trusty_image_publisher && cfy secrets create -s '
-            - { get_input: ubuntu_trusty_image_offer }
-            - ' ubuntu_trusty_image_offer && cfy secrets create -s '
-            - { get_input: ubuntu_trusty_image_sku }
-            - ' ubuntu_trusty_image_sku && cfy secrets create -s '
-            - { get_input: ubuntu_trusty_image_version }
-            - ' ubuntu_trusty_image_version && cfy secrets create -s '
-            - { get_input: small_image_size }
-            - ' small_image_size && cfy secrets create -s '
-            - ''''
-            - { get_attribute: [ agent_key, public_key_export ] }
-            - ''''
-            - ' agent_key_public'
-
-        # THIS DOESNT WORK
-        Second-group-REMOVE_BACKSLASHES_AROUND_COMMAND_KEEP_DOUBLE_QUOTES:
-          concat:
-            - 'cfy secrets create '
-            - 'agent_key_private -s '
-            - '"$(<'
-            - { concat: [ { get_input: local_ssh_directory }, { get_input: agent_key_name } ] }
-            - ')"'
-
-  Demo:
-    value:
-      Step6-Execute-Nodecellar-Demo: 'cfy install https://github.com/cloudify-examples/nodecellar-auto-scale-auto-heal-blueprint/archive/4.0.1.zip -b demo -n azure-blueprint.yaml'
+  1-Instructions:
+    value: { get_attribute: [ ManagerSetup, final_path ] }
+  2-Demo:
+    value: 'cfy install https://github.com/cloudify-examples/nodecellar-auto-scale-auto-heal-blueprint/archive/4.1.0.zip -b demo -n azure-blueprint.yaml'

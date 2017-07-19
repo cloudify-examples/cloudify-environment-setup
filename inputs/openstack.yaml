@@ -1,0 +1,13 @@
+username: -cut-
+password: -cut-
+tenant_name: -cut-
+auth_url: https://-cut-:5000/v2.0
+region: RegionOne
+external_network_name: GATEWAY_NET
+# cloudify_image: 644a4e6f-f365-469d-9a89-8a3a363e1d3d
+cloudify_image: c76d5b15-bf64-4402-bea6-9f4957ac0c6d # When bootstrap: True
+centos_core_image: c76d5b15-bf64-4402-bea6-9f4957ac0c6d
+ubuntu_trusty_image: e41430f7-9131-495b-927f-e7dc4b8994c8
+small_image_flavor: 2
+large_image_flavor: 4
+bootstrap: True
