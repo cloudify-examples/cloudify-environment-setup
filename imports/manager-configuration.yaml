@@ -1,0 +1,85 @@
+imports:
+  - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-fabric-plugin/1.5/plugin.yaml
+
+inputs:
+
+  bootstrap:
+    description: >
+      If you are not using a pre-baked image, this is true.
+    type: boolean
+    default: False
+
+  cli_package_url:
+    description: >
+      If inputs.bootstrap is false, this is the CLI RPM to install and bootstrap with.
+    default: http://repository.cloudifysource.org/cloudify/4.1.0/ga-release/cloudify-enterprise-cli-4.1.rpm
+
+  create_secrets:
+    description: >
+      Whether to create the suggested secrets on the manager.
+    default: true
+
+  upload_plugins:
+    description: >
+      Whether to upload plugins to the manager.
+    default: true
+
+
+node_types:
+
+  cloudify.nodes.Manager.EnvironmentSetup:
+    derived_from: cloudify.nodes.Root
+    properties:
+      bootstrap:
+        default: { get_input: bootstrap }
+      create_secrets:
+        default: { get_input: create_secrets }
+      upload_plugins:
+        default: { get_input: upload_plugins }
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: fabric.fabric_plugin.tasks.run_task
+          inputs:
+            tasks_file:
+              default: scripts/manager/create.py
+            task_name:
+              default: create
+            task_properties:
+              default: { get_input: create_inputs }
+            fabric_env:
+              default:
+                host_string: { get_input: manager_ip }
+                user: { get_input: cloudify_image_username }
+                key_filename: { get_input: cloudify_key_file  }
+        configure:
+          implementation: scripts/manager/configure.py
+          executor: central_deployment_agent
+          inputs:
+            manager_ip:
+              default: { get_input: manager_ip }
+            plugin_urls:
+              default: { get_input: plugin_urls }
+            secrets:
+              default: { get_input: secrets }
+        start:
+          implementation: scripts/manager/start.py
+          executor: central_deployment_agent
+          inputs:
+            manager_ip:
+              default: { get_input: manager_ip }
+            plugin_urls:
+              default: { get_input: plugin_urls }
+            secrets:
+              default: { get_input: secrets }
+        delete:
+          implementation: scripts/manager/delete.py
+          executor: central_deployment_agent
+
+node_templates:
+
+  ManagerSetup:
+    type: cloudify.nodes.Manager.EnvironmentSetup
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: cloudify_host

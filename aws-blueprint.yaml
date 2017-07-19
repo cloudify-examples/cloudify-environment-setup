@@ -2,8 +2,9 @@ tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
   - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/4.1/resources/rest-service/cloudify/types/types.yaml
-  - http://getcloudify.org.s3.amazonaws.com/spec/aws-plugin/1.4.9/plugin.yaml
-  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.2.1/plugin.yaml
+  - http://getcloudify.org.s3.amazonaws.com/spec/aws-plugin/1.4.12/plugin.yaml
+  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.2.5/plugin.yaml
+  - imports/manager-configuration.yaml
 
 inputs:
 
@@ -56,18 +57,91 @@ inputs:
         size: 8
         delete_on_termination: true
 
+  cloudify_host_block_device_mapping:
+    default:
+      '/dev/sda1':
+        delete_on_termination: true
+
   cloudify_ami:
     description: >
       A Cloudify Manager AMI. Default is for region us-east-1.
-      For other regions, search Community AMIs: Cloudify Community 17.3.31.
-      If you choose to bootstrap, try: ami-0fbdf765, change cloudify_image_username: ec2-user, and change the block device from '/dev/sda1' to '/dev/sda'.
-    default: ami-3b6c092d
+      Other available regions:
+        us-west-1: ami-810f21e1
+        eu-west-1: ami-9b6587e2
+        ap-northeast-1: ami-37f3e850
+        ap-southeast-1: ami-539f0830
+        sa-east-1: ami-cd3a4ea1
+      For a vanilla CentOS ami, try: ami-0fbdf765 (us-east-1), change cloudify_image_username: ec2-user, and change cloudify_host_block_device_mapping from '/dev/sda1' to '/dev/sda'.
+    default: ami-89fcf39f
 
   cloudify_instance_type:
     default: m3.large
 
+  centos_core_image:
+    default: ami-0fbdf765
+
   ubuntu_trusty_image:
     default: ami-772aa961
+
+  manager_ip:
+    description: >
+      Resolving the IP for manager setup.
+    default: { get_attribute: [ subnet0_nic_eip0, aws_resource_id ] }
+
+  plugin_urls:
+    description: >
+      Plugins used in AWS blueprint examples.
+    default:
+    - https://github.com/cloudify-incubator/cloudify-utilities-plugin/releases/download/1.2.5/cloudify_utilities_plugin-1.2.5-py27-none-linux_x86_64-centos-Core.wgn
+    - http://repository.cloudifysource.org/cloudify/wagons/cloudify-aws-plugin/1.4.9/cloudify_aws_plugin-1.4.9-py27-none-linux_x86_64-centos-Core.wgn
+    - http://repository.cloudifysource.org/cloudify/wagons/cloudify-aws-plugin/1.4.10/cloudify_aws_plugin-1.4.10-py27-none-linux_x86_64-centos-Core.wgn
+    - http://repository.cloudifysource.org/cloudify/wagons/cloudify-aws-plugin/1.4.11/cloudify_aws_plugin-1.4.11-py27-none-linux_x86_64-centos-Core.wgn
+    - http://repository.cloudifysource.org/cloudify/wagons/cloudify-aws-plugin/1.4.12/cloudify_aws_plugin-1.4.12-py27-none-linux_x86_64-centos-Core.wgn
+    - http://repository.cloudifysource.org/cloudify/wagons/cloudify-aws-plugin/1.4.13/cloudify_aws_plugin-1.4.13-py27-none-linux_x86_64-centos-Core.wgn
+    - http://repository.cloudifysource.org/cloudify/wagons/cloudify-diamond-plugin/1.3.5/cloudify_diamond_plugin-1.3.5-py27-none-linux_x86_64-centos-Core.wgn
+    - http://repository.cloudifysource.org/cloudify/wagons/cloudify-diamond-plugin/1.3.5/cloudify_diamond_plugin-1.3.5-py27-none-linux_x86_64-Ubuntu-trusty.wgn
+
+  secrets:
+    description: >
+      key, value pairs of secrets used in AWS blueprint examples.
+    default:
+      - key: aws_access_key_id
+        value: { get_input: aws_access_key_id }
+      - key: aws_secret_access_key
+        value: { get_input: aws_secret_access_key }
+      - key: ec2_region_name
+        value: { get_input: ec2_region_name }
+      - key: ec2_region_endpoint
+        value: { get_input: ec2_region_endpoint }
+      - key: vpc_id
+        value: { get_attribute: [ vpc, aws_resource_id ] }
+      - key: public_subnet_id
+        value: { get_attribute: [ subnet0, aws_resource_id ] }
+      - key: private_subnet_id
+        value: { get_attribute: [ subnet1, aws_resource_id ] }
+      - key: availability_zone
+        value: { get_input: availability_zone }
+      - key: ubuntu_trusty_image
+        value: { get_input: ubuntu_trusty_image }
+      - key: centos_core_image
+        value: { get_input: centos_core_image }
+      - key: agent_key_public
+        value: { get_attribute: [ agent_key, public_key_export ] }
+      - key: agent_key_private
+        value: { get_attribute: [ agent_key, private_key_export ] }
+
+  create_inputs:
+    default:
+      local_private_key: { get_input: cloudify_key_file  }
+      rpm_package: { get_input: cli_package_url }
+      public_ip: { get_attribute: [ subnet0_nic_eip0, aws_resource_id ] }
+      private_ip: { get_attribute: [ cloudify_host, ip ] }
+      ssh_user: { get_input: cloudify_image_username }
+      ssh_key_filename:
+        concat:
+        - '/home/'
+        - { get_input: cloudify_image_username }
+        - '/.ssh/key.pem'
 
 dsl_definitions:
   client_config: &client_config
@@ -75,15 +149,6 @@ dsl_definitions:
     aws_secret_access_key: { get_input: aws_secret_access_key }
     ec2_region_name: { get_input: ec2_region_name }
     ec2_region_endpoint: { get_input: ec2_region_endpoint }
-
-node_types:
-
-  cloudify.nodes.CloudConfig:
-    derived_from: cloudify.nodes.Root
-    properties:
-      resource_config:
-        default:
-          encode_base64: false
 
 node_templates:
 
@@ -336,14 +401,12 @@ node_templates:
         target: nat_instance
 
   cloudify_host_cloud_config:
-    type: cloudify.nodes.CloudConfig
+    type: cloudify.nodes.CloudInit.CloudConfig
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: scripts/cloud_config/create.py
-          executor: central_deployment_agent
           inputs:
-            cloud_config:
+            resource_config:
               users:
               - name: { get_input: cloudify_image_username }
                 primary-group: wheel
@@ -372,9 +435,7 @@ node_templates:
           implementation: aws.cloudify_aws.ec2.instance.create
           inputs:
             args:
-              block_device_map:
-                '/dev/sda1':
-                  delete_on_termination: true
+              block_device_map: { get_input: cloudify_host_block_device_mapping }
               placement: { get_input: availability_zone }
               user_data: { get_attribute: [ cloudify_host_cloud_config, cloud_config ] }
     relationships:
@@ -385,100 +446,7 @@ node_templates:
 
 outputs:
 
-  Bootstrap:
-    value:
-      Step0a-Upload-Key:
-        concat:
-        - 'cat '
-        - { get_input: cloudify_key_file  }
-        - ' | '
-        - 'ssh -i '
-        - { get_input: cloudify_key_file  }
-        - ' '
-        - { get_input: cloudify_image_username }
-        - '@'
-        - { get_attribute: [ subnet0_nic_eip0, aws_resource_id ] }
-        - ' '''
-        - 'cat >> ~/.ssh/key.pem && chmod 600 ~/.ssh/key.pem'
-        - ''''
-      Step0b-Install-Cloudify-CLI:
-        concat:
-        - 'ssh -t -i '
-        - { get_input: cloudify_key_file  }
-        - ' '
-        - { get_input: cloudify_image_username }
-        - '@'
-        - { get_attribute: [ subnet0_nic_eip0, aws_resource_id ] }
-        - ' '''
-        - 'sudo rpm -i http://repository.cloudifysource.org/cloudify/4.0.1/sp-release/cloudify-4.0.1~sp.el6.x86_64.rpm'
-        - ''''
-      Step0c-Install-Cloudify-Manager:
-        concat:
-        - 'ssh -i '
-        - { get_input: cloudify_key_file  }
-        - ' '
-        - { get_input: cloudify_image_username }
-        - '@'
-        - { get_attribute: [ subnet0_nic_eip0, aws_resource_id ] }
-        - ' '''
-        - 'cfy bootstrap --install-plugins /opt/cfy/cloudify-manager-blueprints/simple-manager-blueprint.yaml -i public_ip='
-        - { get_attribute: [ subnet0_nic_eip0, aws_resource_id ] }
-        - ' -i private_ip='
-        - { get_attribute: [ cloudify_host, ip ] }
-        - ' -i ssh_user='
-        - { get_input: cloudify_image_username }
-        - ' -i ssh_key_filename=~/.ssh/key.pem'
-        - ' -i agents_user=ubuntu -i ignore_bootstrap_validations=false -i admin_username=admin -i admin_password=admin'
-        - ''''
-
-  Configuration:
-    value:
-      Step1-Initialize-Cloudify-Manager-CLI-Profile:
-        concat:
-          - 'cfy profiles use -s '
-          - { get_input: cloudify_image_username }
-          - ' -k '
-          - { get_input: cloudify_key_file }
-          - ' -u admin -p admin -t default_tenant '
-          - { get_attribute: [ subnet0_nic_eip0, aws_resource_id ] }
-      Step2-Upload-AWS-Plugin-Package-Centos: 'cfy plugins upload http://repository.cloudifysource.org/cloudify/wagons/cloudify-aws-plugin/1.4.9/cloudify_aws_plugin-1.4.9-py27-none-linux_x86_64-centos-Core.wgn'
-      Step3-Upload-Diamond-Plugin-Package-Centos: 'cfy plugins upload http://repository.cloudifysource.org/cloudify/wagons/cloudify-diamond-plugin/1.3.5/cloudify_diamond_plugin-1.3.5-py27-none-linux_x86_64-centos-Core.wgn'
-      Step4-Upload-Diamond-Plugin-Package-Ubuntu: 'cfy plugins upload http://repository.cloudifysource.org/cloudify/wagons/cloudify-diamond-plugin/1.3.5/cloudify_diamond_plugin-1.3.5-py27-none-linux_x86_64-Ubuntu-trusty.wgn'
-      Step5-Create-AWS-Secrets:
-        First-group:
-          concat:
-            - 'cfy secrets create -s '
-            - { get_input: aws_access_key_id }
-            - ' aws_access_key_id && cfy secrets create -s '
-            - { get_input: aws_secret_access_key }
-            - ' aws_secret_access_key && cfy secrets create -s '
-            - { get_input: ec2_region_name }
-            - ' ec2_region_name && cfy secrets create -s '
-            - { get_input: ec2_region_endpoint }
-            - ' ec2_region_endpoint && cfy secrets create -s '
-            - { get_attribute: [ vpc, aws_resource_id ] }
-            - ' vpc_id && cfy secrets create  -s '
-            - { get_attribute: [ subnet0, aws_resource_id ] }
-            - ' public_subnet_id && cfy secrets create -s '
-            - { get_attribute: [ subnet1, aws_resource_id ] }
-            - ' private_subnet_id && cfy secrets create -s '
-            - { get_input: availability_zone }
-            - ' availability_zone && cfy secrets create -s '
-            - { get_input: ubuntu_trusty_image }
-            - ' ubuntu_trusty_image && cfy secrets create -s '
-            - ''''
-            - { get_attribute: [ agent_key, public_key_export ] }
-            - ''''
-            - ' agent_key_public'
-        # THIS DOESNT WORK
-        Second-group-REMOVE_BACKSLASHES_AROUND_COMMAND_KEEP_DOUBLE_QUOTES:
-          concat:
-            - 'cfy secrets create '
-            - 'agent_key_private -s '
-            - '"$(<'
-            - { concat: [ { get_input: local_ssh_directory }, { get_input: agent_key_name } ] }
-            - ')"'
-
-  Demo:
-    value:
-      Step6-Execute-Nodecellar-Demo: 'cfy install https://github.com/cloudify-examples/nodecellar-auto-scale-auto-heal-blueprint/archive/4.0.1.zip -b demo -n aws-blueprint.yaml'
+  1-Instructions:
+    value: { get_attribute: [ ManagerSetup, final_path ] }
+  2-Demo:
+    value: 'cfy install https://github.com/cloudify-examples/nodecellar-auto-scale-auto-heal-blueprint/archive/4.1.0.zip -b demo -n aws-blueprint.yaml'

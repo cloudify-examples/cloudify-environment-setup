@@ -1,0 +1,9 @@
+aws_secret_access_key: -cut-
+aws_access_key_id: -cut-
+# cloudify_ami: ami-75ef7763
+cloudify_ami: ami-0fbdf765  # When bootstrap: True
+cloudify_image_username: ec2-user
+cloudify_host_block_device_mapping:
+  '/dev/sda':
+    delete_on_termination: true
+bootstrap: True
