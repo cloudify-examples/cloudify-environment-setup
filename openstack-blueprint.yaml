@@ -127,7 +127,7 @@ inputs:
     - key: agent_key_public
       value: { get_attribute: [ agent_key, public_key_export ] }
     - key: agent_key_private
-      value: { get_attribute: [ agent_key, private_key_export ] }
+      value: { get_property: [agent_key, resource_config, private_key_path] }
 
   create_inputs:
     default:
@@ -425,4 +425,4 @@ outputs:
   1-Instructions:
     value: { get_attribute: [ ManagerSetup, final_path ] }
   2-Demo:
-    value: 'cfy install https://github.com/cloudify-examples/nodecellar-auto-scale-auto-heal-blueprint/archive/4.1.0.zip -b demo -n openstack-blueprint.yaml'
+    value: 'cfy install https://github.com/cloudify-examples/nodecellar-auto-scale-auto-heal-blueprint/archive/4.1.zip -b demo -n openstack-blueprint.yaml'
