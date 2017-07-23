@@ -127,7 +127,7 @@ inputs:
     - key: agent_key_public
       value: { get_attribute: [ agent_key, public_key_export ] }
     - key: agent_key_private
-      value: { get_property: [agent_key, resource_config, private_key_path] }
+      value: { get_attribute: [ agent_key, private_key_export ] }
 
   create_inputs:
     default:
