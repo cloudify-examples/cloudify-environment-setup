@@ -84,7 +84,7 @@ $ cfy deployments outputs
 Another variation is:
 
 ```shell
-$ cfy deployments outputs -b [azure/openstack/aws]
+$ cfy deployments outputs -b cloudify-environment-setup-4.1/
 ```
 
 The output should look similar to:
