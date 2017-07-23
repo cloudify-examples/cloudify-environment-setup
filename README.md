@@ -45,7 +45,7 @@ Cloudify Manager can be used in any environment, whether cloud, baremetal, or a 
 ### 1. Download and extract this blueprint archive ([link](https://github.com/cloudify-examples/cloudify-environment-blueprint/archive/latest.zip)) to your current working directory.
 
 
-### 2. To install your environment's infrastructure, execute one of the example commands below, inserting your account credentials where indicated.
+### 2. To install your environment's infrastructure, execute one of the example commands below, inserting your account credentials in the _*.yaml_ file located in the _inputs_ directory for your IaaS.
 
 _Note: This command should be run from the same directory in which you extracted the blueprint in the previous step._
 
@@ -53,21 +53,21 @@ _Note: This command should be run from the same directory in which you extracted
 #### For AWS run:
 
 ```shell
-$ cfy install cloudify-environment-setup-latest/aws-blueprint.yaml -i inputs.yaml --install-plugins
+$ cfy install cloudify-environment-setup-4.1/aws-blueprint.yaml -i cloudify-environment-setup-4.1/inputs/aws.yaml --install-plugins
 ```
 
 
 #### For Azure run:
 
 ```shell
-$ cfy install cloudify-environment-setup-latest/azure-blueprint.yaml -i inputs.yaml --install-plugins
+$ cfy install cloudify-environment-setup-4.1/azure-blueprint.yaml -i cloudify-environment-setup-4.1/inputs/azure.yaml --install-plugins
 ```
 
 
 #### For Openstack run:
 
 ```shell
-$ cfy install cloudify-environment-setup-latest/openstack-blueprint.yaml -i inputs.yaml --install-plugins
+$ cfy install cloudify-environment-setup-4.1/openstack-blueprint.yaml -i cloudify-environment-setup-4.1/inputs/openstack.yaml --install-plugins
 ```
 
 
