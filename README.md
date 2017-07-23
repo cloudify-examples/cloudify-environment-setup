@@ -60,14 +60,14 @@ $ cfy install cloudify-environment-setup-latest/aws-blueprint.yaml -i inputs.yam
 #### For Azure run:
 
 ```shell
-$ cfy install cloudify-environment-setup-latest/openstack-blueprint.yaml -i inputs.yaml --install-plugins
+$ cfy install cloudify-environment-setup-latest/azure-blueprint.yaml -i inputs.yaml --install-plugins
 ```
 
 
 #### For Openstack run:
 
 ```shell
-$ cfy install cloudify-environment-setup-latest/azure-blueprint.yaml -i inputs.yaml --install-plugins
+$ cfy install cloudify-environment-setup-latest/openstack-blueprint.yaml -i inputs.yaml --install-plugins
 ```
 
 
