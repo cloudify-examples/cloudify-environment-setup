@@ -93,7 +93,7 @@ if __name__ == '__main__':
                     plugin,
                     _progress_handler=upload_handler)
 
-    elif ctx.instance.runtime_properties.get('instructions_file'):
+    if ctx.instance.runtime_properties.get('instructions_file'):
         name = ctx.instance.runtime_properties['instructions_file']
 
         with open(name, 'a') as out:
@@ -121,5 +121,3 @@ if __name__ == '__main__':
             ctx.logger.error('Was not able to write new intruction file.')
         ctx.logger.info('Instructions: {0}'.format(final_path))
         ctx.instance.runtime_properties['final_path'] = final_path
-    else:
-        ctx.logger.error('Bootstrap specified, but no instruction file found.')
