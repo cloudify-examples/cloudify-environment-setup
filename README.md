@@ -28,16 +28,16 @@ Cloudify Manager can be used in any environment, whether cloud, baremetal, or a 
 ### Using a pre-baked image.
 
     You will find a list of pre-bootstrapped images on [Cloudify's Downloads page](http://cloudify.co/download).
-    - AWS: AMIs are listed in the `aws-blueprint.yaml` under the `cloudify_ami` input.
+    - AWS: AMIs are listed in the "aws-blueprint.yaml" under the `cloudify_ami` input.
       You may also find links [here](http://cloudify.co/thank_you_aws_ent).
-      Also, change the ```bootstrap: True``` to ```False``` in your inputs file.
+      Also, change the "bootstrap: True" to "False" in your inputs file.
     - Openstack: Follow [these instructions](https://docs.openstack.org/user-guide/dashboard-manage-images.html) to upload the [Openstack QCOW image](http://cloudify.co/download) to Openstack.
       You will also need to find the correct values for cloudify_image, centos_core_image, ubuntu_trusty_image, small_image_flavor, large_image_flavor. Ask your Openstack Admin for more info on these.
     - Azure: There is not currently a pre-bootstrapped image for Azure, so bootstrap is the only option.
 
 ### Bootstrap
 
-    To execute bootstrap, add ```bootstrap: True``` as a single line to your `inputs.yaml` file. This is the default already in the sample input files.
+    To execute bootstrap, add "bootstrap: True" as a single line to your "*.yaml" file. This is the default already in the sample input files.
 
 # Instructions
 
