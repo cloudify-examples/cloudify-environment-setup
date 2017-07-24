@@ -11,7 +11,7 @@ To ask a question or report an issue, please use [github issues](https://github.
 
 Cloudify Manager can be used in any environment, whether cloud, baremetal, or a hybrid of the two. This blueprint will deploy and configure the reference environment that is used by some other examples.
 
-## Pre-requisites
+# Pre-requisites
 
 - IaaS Cloud provider and API credentials and sufficient permissions to provision network and compute resources:
   - [AWS Credentials](http://docs.aws.amazon.com/general/latest/gr/aws-sec-cred-types.html)
