@@ -55,24 +55,24 @@ def create(local_private_key,
     if ctx.node.properties.get('bootstrap'):
         put(local_private_key, ssh_key_filename)
         run('chmod 600 {0}'.format(ssh_key_filename))
-        ssh_command = 'ssh -i {0} {1}@{2}'.format(local_private_key, ssh_user, public_ip)
-        rpm_install_command = 'sudo rpm -i {0}'.format(rpm_package)
-        bootstrap_command = \
-            BOOTSTRAP_COMMAND.format(
-                '/opt/cfy/cloudify-manager-blueprints/simple-manager-blueprint.yaml',
-                public_ip,
-                private_ip,
-                ssh_user,
-                ssh_key_filename,
-                agents_user,
-                ignore_bootstrap_validations,
-                admin_username,
-                admin_password)
-        fd, name = tempfile.mkstemp()
-        with open(name, 'w') as out:
-            out.write(instructions.format(
-                ssh_command,
-                rpm_install_command,
-                bootstrap_command,
-                ssh_user, local_private_key, admin_password, admin_password, public_ip))
-        ctx.instance.runtime_properties['instructions_file'] = name
+    ssh_command = 'ssh -i {0} {1}@{2}'.format(local_private_key, ssh_user, public_ip)
+    rpm_install_command = 'sudo rpm -i {0}'.format(rpm_package)
+    bootstrap_command = \
+        BOOTSTRAP_COMMAND.format(
+            '/opt/cfy/cloudify-manager-blueprints/simple-manager-blueprint.yaml',
+            public_ip,
+            private_ip,
+            ssh_user,
+            ssh_key_filename,
+            agents_user,
+            ignore_bootstrap_validations,
+            admin_username,
+            admin_password)
+    fd, name = tempfile.mkstemp()
+    with open(name, 'w') as out:
+        out.write(instructions.format(
+            ssh_command,
+            rpm_install_command,
+            bootstrap_command,
+            ssh_user, local_private_key, admin_password, admin_password, public_ip))
+    ctx.instance.runtime_properties['instructions_file'] = name
