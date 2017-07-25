@@ -11,7 +11,7 @@ To ask a question or report an issue, please use [github issues](https://github.
 
 Cloudify Manager can be used in any environment, whether cloud, baremetal, or a hybrid of the two. This blueprint will deploy and configure the reference environment that is used by some other examples.
 
-# Pre-requisites
+### Pre-requisites
 
 - IaaS Cloud provider and API credentials and sufficient permissions to provision network and compute resources:
   - [AWS Credentials](http://docs.aws.amazon.com/general/latest/gr/aws-sec-cred-types.html)
@@ -20,32 +20,33 @@ Cloudify Manager can be used in any environment, whether cloud, baremetal, or a 
 - A virtual environment application such as [virtualenv](https://virtualenv.pypa.io/en/stable/) installed on your computer.
 - [Cloudify CLI](http://docs.getcloudify.org/4.1.0/installation/from-packages/) installed in a virtual environment.
 
-# Preparation
+### Preparation
 
 - You will create an inputs yaml file. Examples are provided in the `inputs` directory already if you prefer.
 - Decide if you will use a pre-baked image or if you will bootstrap.
 
-### Using a pre-baked image.
+**Using a pre-baked image.**
 
-    You will find a list of pre-bootstrapped images on [Cloudify's Downloads page](http://cloudify.co/download).
-    - AWS: AMIs are listed in the "aws-blueprint.yaml" under the `cloudify_ami` input.
-      You may also find links [here](http://cloudify.co/thank_you_aws_ent).
-      Also, change the "bootstrap: True" to "False" in your inputs file.
-    - Openstack: Follow [these instructions](https://docs.openstack.org/user-guide/dashboard-manage-images.html) to upload the [Openstack QCOW image](http://cloudify.co/download) to Openstack.
-      You will also need to find the correct values for cloudify_image, centos_core_image, ubuntu_trusty_image, small_image_flavor, large_image_flavor. Ask your Openstack Admin for more info on these.
-    - Azure: There is not currently a pre-bootstrapped image for Azure, so bootstrap is the only option.
+You will find a list of pre-bootstrapped images on [Cloudify's Downloads page](http://cloudify.co/download).
 
-### Bootstrap
+  - AWS: AMIs are listed in the "aws-blueprint.yaml" under the `cloudify_ami` input.
+    You may also find links [here](http://cloudify.co/thank_you_aws_ent).
+    Also, change the "bootstrap: True" to "False" in your inputs file.
+  - Openstack: Follow [these instructions](https://docs.openstack.org/user-guide/dashboard-manage-images.html) to upload the [Openstack QCOW image](http://cloudify.co/download) to Openstack.
+    You will also need to find the correct values for cloudify_image, centos_core_image, ubuntu_trusty_image, small_image_flavor, large_image_flavor. Ask your Openstack Admin for more info on these.
+  - Azure: There is not currently a pre-bootstrapped image for Azure, so bootstrap is the only option.
 
-    To execute bootstrap, add "bootstrap: True" as a single line to your "*.yaml" file. This is the default already in the sample input files.
+**Bootstrap**
 
-# Instructions
+To execute bootstrap, add "bootstrap: True" as a single line to your "*.yaml" file. This is the default already in the sample input files.
 
-### 1. Create a new virtual environment and install Cloudify.
+## Instructions
 
-### 2. Download and extract this blueprint archive ([link](https://github.com/cloudify-examples/cloudify-environment-setup/archive/latest.zip)) to your current working directory.
+1. Install [Cloudify CLI](http://docs.getcloudify.org/4.1.0/installation/from-packages/).
 
-### 3. To install your environment's infrastructure, execute one of the example commands below, inserting your account credentials in the _*.yaml_ file located in the _inputs_ directory for your IaaS.
+2. Download and extract this blueprint archive ([link](https://github.com/cloudify-examples/cloudify-environment-setup/archive/latest.zip)) to your current working directory.
+
+3. To install your environment's infrastructure, execute one of the example commands below, inserting your account credentials in the _*.yaml_ file located in the _inputs_ directory for your IaaS.
 
 _Note: This command should be run from the same directory in which you extracted the blueprint in the previous step._
 
@@ -67,7 +68,7 @@ $ cfy install cloudify-environment-setup-4.1/azure-blueprint.yaml -i cloudify-en
 $ cfy install cloudify-environment-setup-4.1/openstack-blueprint.yaml -i cloudify-environment-setup-latest/inputs/openstack.yaml --install-plugins
 ```
 
-## 4. Configure or Bootstrap (and then configure) your Cloudify Manager.
+4. Configure or Bootstrap (and then configure) your Cloudify Manager.
 
 When the install execution has finished, you will run this command to get the deployment outputs:
 
@@ -100,7 +101,7 @@ ssh -i ~/.ssh/cfy-manager-key-os centos@000.000.000.000
 
 _The first three steps must be completed if you are executing bootstrap. The rest of the steps are followed regardless._
 
-### 5. Bootstrap your manager:
+5. Bootstrap your manager:
 
 _Only run this step if you are not using a pre-baked image._
 
@@ -122,39 +123,23 @@ $ sudo rpm -i http://repository.cloudifysource.org/cloudify/4.1.0/ga-release/clo
 $ cfy bootstrap /opt/cfy/cloudify-manager-blueprints/simple-manager-blueprint.yaml -i public_ip=10.239.0.241 -i private_ip=192.168.121.5 -i ssh_user=centos -i ssh_key_filename=/home/centos/.ssh/key.pem -i agents_user=ubuntu -i ignore_bootstrap_validations=true -i admin_username=admin -i admin_password=admin
 ```
 
-### 6. Configure your manager:
+6. Configure your manager:
 
 At this stage, it is suggested to wait 5 minutes for all of the services to synchronize. Both bootstrapped and pre-bootstrapped managers need a few moments to stabilize after starting.
 
-#### After bootstrap, exit the VM and initialize the management profile:
+#### Initialize the management profile:
+
+_If you bootstrapped, exit the manager VM and execute this command on your workstation CLI._
 
 ```shell
 $ cfy profiles use -s centos -k ~/.ssh/cfy-manager-key-os -u admin -p admin -t default_tenant 10.239.0.241
 ```
 
-#### Create secrets:
-
-```shell
-$ cfy secrets create keystone_username -s "my_username"
-Secret `keystone_username` created
-$ cfy secrets create keystone_password -s "my_password"
-Secret `keystone_password` created
-...
-```
-
-#### Upload plugins:
-
-```shell
-$ cfy plugins upload http://repository.cloudifysource.org/cloudify/wagons/cloudify-diamond-plugin/1.3.5/cloudify_diamond_plugin-1.3.5-py27-none-linux_x86_64-Ubuntu-trusty.wgn
-Uploading plugin http://repository.cloudifysource.org/cloudify/wagons/cloudify-diamond-plugin/1.3.5/cloudify_diamond_plugin-1.3.5-py27-none-linux_x86_64-Ubuntu-trusty.wgn...
-Plugin uploaded. The plugin's id is 1b492d45-329b-4c1d-96bc-f965924709ac
-```
-
-# Your manager is now ready. Proceed to the example blueprints!
+_Your manager is now ready. Proceed to the example blueprints!_
 
 Start with [Nodecellar Auto-scale Auto-heal](https://github.com/cloudify-examples/nodecellar-auto-scale-auto-heal-blueprint/tree/4.0.1).
 
-### 6. When you are ready to uninstall your environment, run:
+6. When you are ready to uninstall your environment, run:
 
 ```shell
 $ cfy profiles use local
