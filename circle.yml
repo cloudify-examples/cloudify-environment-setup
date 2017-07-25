@@ -1,0 +1,29 @@
+machine:
+  python:
+    version: 2.7.9
+
+checkout:
+  post:
+    - >
+      if [ -n "$CI_PULL_REQUEST" ]; then
+        PR_ID=${CI_PULL_REQUEST##*/}
+        git fetch origin +refs/pull/$PR_ID/merge:
+        git checkout -qf FETCH_HEAD
+      fi
+
+dependencies:
+  override:
+    - pip install cloudify
+
+
+test:
+  override:
+    - cfy blueprints validate azure-blueprint.yaml
+    - cfy blueprints validate aws-blueprint.yaml
+    - cfy blueprints validate openstack-blueprint.yaml
+
+deployment:
+  release:
+    tag: /.*/
+    commands:
+      - (true)

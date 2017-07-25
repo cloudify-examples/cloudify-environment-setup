@@ -1,0 +1,8 @@
+subscription_id: -cut-
+tenant_id: -cut-
+client_id: -cut-
+client_secret: -cut-
+location: eastus
+resource_prefix: cfy
+resource_suffix: 00
+bootstrap: True
