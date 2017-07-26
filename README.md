@@ -53,19 +53,19 @@ _Note: This command should be run from the same directory in which you extracted
 #### For AWS run:
 
 ```shell
-$ cfy install cloudify-environment-setup-4.1/aws-blueprint.yaml -i cloudify-environment-setup-latest/inputs/aws.yaml --install-plugins
+$ cfy install cloudify-environment-setup-latest/aws-blueprint.yaml -i cloudify-environment-setup-latest/inputs/aws.yaml --install-plugins
 ```
 
 #### For Azure run:
 
 ```shell
-$ cfy install cloudify-environment-setup-4.1/azure-blueprint.yaml -i cloudify-environment-setup-latest/inputs/azure.yaml --install-plugins
+$ cfy install cloudify-environment-setup-latest/azure-blueprint.yaml -i cloudify-environment-setup-latest/inputs/azure.yaml --install-plugins
 ```
 
 #### For Openstack run:
 
 ```shell
-$ cfy install cloudify-environment-setup-4.1/openstack-blueprint.yaml -i cloudify-environment-setup-latest/inputs/openstack.yaml --install-plugins
+$ cfy install cloudify-environment-setup-latest/openstack-blueprint.yaml -i cloudify-environment-setup-latest/inputs/openstack.yaml --install-plugins
 ```
 
 4. Configure or Bootstrap (and then configure) your Cloudify Manager.
@@ -143,7 +143,7 @@ Start with [Nodecellar Auto-scale Auto-heal](https://github.com/cloudify-example
 
 ```shell
 $ cfy profiles use local
-$ cfy uninstall --allow-custom-parameters -p ignore_failure=true --task-retries=30 --task-retry-interval=5
+$ cfy uninstall -b cloudify-environment-setup-latest --allow-custom-parameters -p ignore_failure=true --task-retries=30 --task-retry-interval=5
 ```
 
 # Troubleshooting
