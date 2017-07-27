@@ -6,7 +6,6 @@ imports:
   - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.2.5/plugin.yaml
   - imports/manager-configuration.yaml
 
-
 inputs:
 
   gcp_auth_file:

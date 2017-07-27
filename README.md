@@ -341,4 +341,3 @@ Can't use manager 34.226.3.116. ('Connection aborted.', BadStatusLine("''",))
 ```
 <Response><Errors><Error><Code>Unsupported</Code><Message>Your requested instance type (t1.micro) is not supported in your requested Availability Zone (us-east-1e). Please retry your request by not specifying an Availability Zone or choosing us-east-1a, us-east-1b, us-east-1d, us-east-1c.</Message></Error></Errors><RequestID>c00ced89-5e1d-4bcc-aac1-a8eff6e19935</RequestID></Response>
 ```
-
