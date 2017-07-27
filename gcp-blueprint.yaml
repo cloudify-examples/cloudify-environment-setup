@@ -1,22 +1,23 @@
 tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
-  - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/4.0.1/resources/rest-service/cloudify/types/types.yaml
+  - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/4.1/resources/rest-service/cloudify/types/types.yaml
   - http://getcloudify.org.s3.amazonaws.com/spec/gcp-plugin/1.0/plugin.yaml
-  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.2.1/plugin.yaml
+  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.2.5/plugin.yaml
+  - imports/manager-configuration.yaml
 
 inputs:
 
-  gcp_auth:
+  gcp_auth_file:
     description: PATH TO YOUR GCP AUTH JSON FILE
 
-  project:
+  gcp_project_name:
     description: YOUR GCP PROJECT ID
 
-  zone:
+  gcp_zone:
     default: us-east1-b
 
-  region:
+  gcp_region:
     default: us-east1
 
   network_subnet0_cidr:
@@ -49,17 +50,71 @@ inputs:
   cloudify_image:
     default: https://www.googleapis.com/compute/v1/projects/centos-cloud/global/images/centos-7-v20170523
 
-  cloudify_instance_type:
+  gcp_small_instance_type:
     default: n1-standard-2
 
-  ubuntu_trusty_image:
+  gcp_ubuntu_trusty_image:
     default: https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-1404-trusty-v20170517
+
+  manager_ip:
+    description: >
+      Resolving the IP for manager setup.
+    default: { get_attribute: [ network_subnet0_staticip, address ] }
+
+  plugin_urls:
+    description: >
+      Plugins used in AWS blueprint examples.
+    default:
+    - https://github.com/cloudify-incubator/cloudify-utilities-plugin/releases/download/1.2.5/cloudify_utilities_plugin-1.2.5-py27-none-linux_x86_64-centos-Core.wgn
+    - http://repository.cloudifysource.org/cloudify/wagons/cloudify-gcp-plugin/1.0/cloudify_gcp_plugin-1.0-py27-none-linux_x86_64-centos-Core.wgn
+    - http://repository.cloudifysource.org/cloudify/wagons/cloudify-diamond-plugin/1.3.5/cloudify_diamond_plugin-1.3.5-py27-none-linux_x86_64-centos-Core.wgn
+    - http://repository.cloudifysource.org/cloudify/wagons/cloudify-diamond-plugin/1.3.5/cloudify_diamond_plugin-1.3.5-py27-none-linux_x86_64-Ubuntu-trusty.wgn
+
+  secrets:
+    description: >
+      key, value pairs of secrets used in AWS blueprint examples.
+    default:
+    - key: gcp_auth_file
+      value: { get_input: gcp_auth_file }
+    - key: gcp_project_name
+      value: { get_input: gcp_project_name }
+    - key: gcp_management_network_name
+      value: { get_property: [ network, name ] }
+    - key: gcp_zone
+      value: { get_input: gcp_zone }
+    - key: gcp_region
+      value: { get_input: gcp_region }
+    - key: gcp_management_subnetwork_name
+      value: { get_property: [ network_subnet0, name ] }
+    - key: gcp_private_subnetwork_name
+      value: { get_property: [ network_subnet1, name ] }
+    - key: gcp_ubuntu_trusty_image
+      value: { get_input: gcp_ubuntu_trusty_image }
+    - key: gcp_small_instance_type
+      value: { get_input: gcp_small_instance_type }
+    - key: agent_key_public
+      value: { get_attribute: [ agent_key, public_key_export ] }
+    - key: agent_key_private
+      value: { get_attribute: [ agent_key, private_key_export ] }
+
+  create_inputs:
+    default:
+      local_private_key: { get_input: cloudify_key_file  }
+      rpm_package: { get_input: cli_package_url }
+      public_ip: { get_input: manager_ip }
+      private_ip: { get_attribute: [ cloudify_host, ip ] }
+      ssh_user: { get_input: cloudify_image_username }
+      ssh_key_filename:
+        concat:
+        - '/home/'
+        - { get_input: cloudify_image_username }
+        - '/.ssh/key.pem'
 
 dsl_definitions:
   client_config: &client_config
-    auth: { get_input: gcp_auth }
-    project: { get_input: project }
-    zone: { get_input: zone }
+    auth: { get_input: gcp_auth_file }
+    project: { get_input: gcp_project_name }
+    zone: { get_input: gcp_zone }
 
 node_templates:
 
@@ -98,7 +153,7 @@ node_templates:
   network_subnet0_staticip:
     type: cloudify.gcp.nodes.Address
     properties:
-      region: { get_input: region }
+      region: { get_input: gcp_region }
       gcp_config: *client_config
       name: { concat: [ { get_input: resource_prefix }, 's0ip0' ] }
 
@@ -115,7 +170,7 @@ node_templates:
       gcp_config: *client_config
       name: { concat: [ { get_input: resource_prefix }, 'network_subnet0' ] }
       subnet: { get_input: network_subnet0_cidr }
-      region: { get_input: region }
+      region: { get_input: gcp_region }
     relationships:
     - type: cloudify.gcp.relationships.contained_in_network
       target: network
@@ -126,7 +181,7 @@ node_templates:
       gcp_config: *client_config
       name: { concat: [ { get_input: resource_prefix }, 'network_subnet1' ] }
       subnet: { get_input: network_subnet1_cidr }
-      region: { get_input: region }
+      region: { get_input: gcp_region }
     relationships:
     - type: cloudify.gcp.relationships.contained_in_network
       target: network
@@ -177,8 +232,8 @@ node_templates:
       name: { concat: [ { get_input: resource_prefix }, 'cloudify_host' ] }
       gcp_config: *client_config
       image_id: { get_input: cloudify_image }
-      instance_type: { get_input: cloudify_instance_type }
-      zone: { get_input: zone }
+      instance_type: { get_input: gcp_small_instance_type }
+      zone: { get_input: gcp_zone }
       agent_config:
         install_method: none
     relationships:
@@ -191,113 +246,17 @@ node_templates:
 
 outputs:
 
-  Bootstrap:
-    value:
-      Step0a-Upload-Key:
-        concat:
-        - 'cat '
-        - { get_input: cloudify_key_file  }
-        - ' | '
-        - 'sudo ssh -i '
-        - { get_input: cloudify_key_file  }
-        - ' '
-        - { get_input: cloudify_image_username }
-        - '@'
-        - { get_attribute: [ network_subnet0_staticip, address ] }
-        - ' '''
-        - 'cat >> ~/.ssh/key.pem && chmod 600 ~/.ssh/key.pem'
-        - ''''
-      Step0b-Copy-GCP-Auth-File:
-        concat:
-          - 'sudo scp -i '
-          - { get_input: cloudify_key_file  }
-          - ' '
-          - { get_input: gcp_auth }
-          - ' '
-          - { get_input: cloudify_image_username }
-          - '@'
-          - { get_attribute: [ network_subnet0_staticip, address ] }
-          - ':~/'
-      Step0c-Install-Cloudify-CLI:
-        concat:
-        - 'ssh -t -i '
-        - { get_input: cloudify_key_file  }
-        - ' '
-        - { get_input: cloudify_image_username }
-        - '@'
-        - { get_attribute: [ network_subnet0_staticip, address ] }
-        - ' '''
-        - 'sudo rpm -i http://repository.cloudifysource.org/cloudify/4.0.1/sp-release/cloudify-4.0.1~sp.el6.x86_64.rpm'
-        - ''''
-      Step0d-Install-Cloudify-Manager:
-        concat:
-        - 'ssh -i '
-        - { get_input: cloudify_key_file  }
-        - ' '
-        - { get_input: cloudify_image_username }
-        - '@'
-        - { get_attribute: [ network_subnet0_staticip, address ] }
-        - ' '''
-        - 'cfy bootstrap --install-plugins /opt/cfy/cloudify-manager-blueprints/simple-manager-blueprint.yaml -i public_ip='
-        - { get_attribute: [ network_subnet0_staticip, address ] }
-        - ' -i private_ip='
-        - { get_attribute: [ cloudify_host, ip ] }
-        - ' -i ssh_user='
-        - { get_input: cloudify_image_username }
-        - ' -i ssh_key_filename=~/.ssh/key.pem'
-        - ' -i agents_user=ubuntu -i ignore_bootstrap_validations=false -i admin_username=admin -i admin_password=admin'
-        - ''''
-
-  Configuration:
-    value:
-      Step1-Initialize-Cloudify-Manager-CLI-Profile:
-        concat:
-          - 'cfy profiles use -s '
-          - { get_input: cloudify_image_username }
-          - ' -k '
-          - { get_input: cloudify_key_file }
-          - ' -u admin -p admin -t default_tenant '
-          - { get_attribute: [ network_subnet0_staticip, address ] }
-      Step2-Upload-GCP-Plugin-Package-Centos: 'cfy plugins upload http://repository.cloudifysource.org/cloudify/wagons/cloudify-gcp-plugin/1.0/cloudify_gcp_plugin-1.0-py27-none-linux_x86_64-centos-Core.wgn'
-      Step3-Upload-Diamond-Plugin-Package-Centos: 'cfy plugins upload http://repository.cloudifysource.org/cloudify/wagons/cloudify-diamond-plugin/1.3.5/cloudify_diamond_plugin-1.3.5-py27-none-linux_x86_64-centos-Core.wgn'
-      Step4-Upload-Diamond-Plugin-Package-Ubuntu: 'cfy plugins upload http://repository.cloudifysource.org/cloudify/wagons/cloudify-diamond-plugin/1.3.5/cloudify_diamond_plugin-1.3.5-py27-none-linux_x86_64-Ubuntu-trusty.wgn'
-      Step5-Create-GCP-Secrets:
-        First-group:
-          concat:
-            - 'cfy secrets create -s /home/centos/GCP-AUTH-FILE.json'
-            - ' gcp_auth && cfy secrets create  -s '
-            - { get_input: project }
-            - ' project && cfy secrets create  -s '
-            - { get_property: [ network, name ] }
-            - ' network && cfy secrets create  -s '
-            - { get_input: zone }
-            - ' zone && cfy secrets create  -s '
-            - { get_input: region }
-            - ' region && cfy secrets create  -s '
-            - { get_property: [ network_subnet0, name ] }
-            - ' public_subnet_name && cfy secrets create  -s '
-            - { get_property: [ network_subnet1, name ] }
-            - ' private_subnet_name && cfy secrets create -s '
-            - { get_input: ubuntu_trusty_image }
-            - ' ubuntu_trusty_image && cfy secrets create -s '
-            - { get_input: cloudify_instance_type }
-            - ' cloudify_instance_type'
-
-        # THIS DOESNT WORK
-        Second-group-REMOVE_BACKSLASHES_AROUND_COMMAND_KEEP_DOUBLE_QUOTES:
-          concat:
-            - 'cfy secrets create '
-            - 'agent_key_private -s '
-            - '"$(<'
-            - { concat: [ { get_input: local_ssh_directory }, { get_input: agent_key_name } ] }
-            - ')"'
-
-  Demo:
-    value:
-      Step6-Execute-Nodecellar-Demo:
-        concat:
-          - 'cfy blueprints upload examples/gcp-simple-blueprint.yaml -b demo'
-          - ''''
-          - 'cfy deployments create -b demo'
-          - ''''
-          - 'cfy executions start install -d demo'
+  1-Instructions:
+    value: { get_attribute: [ ManagerSetup, final_path ] }
+  2-Demo:
+    value: ' '
+  a.:
+    value: 'Download https://github.com/Cloudify-PS/nodecellar-auto-scale-auto-heal-blueprint/archive/gcp_blueprint.zip'
+  b.:
+    value: 'Unzip gcp_blueprint.zip'
+  c.:
+    value: 'Run cd nodecellar-auto-scale-auto-heal-blueprint-gcp_blueprint'
+  d.:
+    value: 'Add the gcp_auth file content to gcp-blueprint.yaml in auth under dsl_definitions'
+  e.:
+    value: 'Run cfy install gcp-blueprint.yaml -b demo'
