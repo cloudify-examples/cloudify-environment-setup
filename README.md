@@ -84,6 +84,7 @@ When you execute the blueprint, you will provision the following resources in yo
   * agent_key_private
   * agent_key_public
 
+**Bootstrap**
 
 * AWS Secrets:
   * vpc_id: This is the ID of the vpc. The same vpc that your manager is attached to.
@@ -120,6 +121,7 @@ When you execute the blueprint, you will provision the following resources in yo
   * keystone_password: Your Keystone V2 password.
   * keystone_username:Your Keystone V2 username.
 
+_Note: This command should be run from the same directory in which you extracted the blueprint in the previous step._
 
 ## Preparation
 
@@ -179,6 +181,7 @@ $ cfy install cloudify-environment-setup-latest/openstack-blueprint.yaml -i clou
 $ cfy install cloudify-environment-setup-latest/openstack-blueprint.yaml -i cloudify-environment-setup-latest/inputs/openstack.yaml -b manager
 ```
 
+_Only run this step if you are not using a pre-baked image._
 
 ## Manager Setup Steps
 
@@ -255,8 +258,8 @@ When you are ready to uninstall your environment, run:
 ```shell
 $ cfy profiles use local
 $ cfy uninstall --allow-custom-parameters -p ignore_failure=true --task-retries=30 --task-retry-interval=5 -b manager
-```
 
+```
 
 # Troubleshooting
 
