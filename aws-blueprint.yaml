@@ -66,13 +66,14 @@ inputs:
     description: >
       A Cloudify Manager AMI. Default is for region us-east-1.
       Other available regions:
-        us-west-1: ami-810f21e1
-        eu-west-1: ami-9b6587e2
-        ap-northeast-1: ami-37f3e850
-        ap-southeast-1: ami-539f0830
-        sa-east-1: ami-cd3a4ea1
+        ami-58361d38 on us-west-1 region
+        ami-6a23d513 on eu-west-1 region
+        ami-4f27cc29 on ap-northeast-1 region
+        ami-60039a03 on ap-southeast-1 region
+        ami-d195e3bd on sa-east-1 region
+        ami-ab210ed0 on us-east-1 region
       For a vanilla CentOS ami, try: ami-0fbdf765 (us-east-1), change cloudify_image_username: ec2-user, and change cloudify_host_block_device_mapping from '/dev/sda1' to '/dev/sda'.
-    default: ami-89fcf39f
+    default: ami-ab210ed0
 
   cloudify_instance_type:
     default: m3.large

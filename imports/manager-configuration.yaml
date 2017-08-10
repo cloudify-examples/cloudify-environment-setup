@@ -12,7 +12,7 @@ inputs:
   cli_package_url:
     description: >
       If inputs.bootstrap is false, this is the CLI RPM to install and bootstrap with.
-    default: http://repository.cloudifysource.org/cloudify/4.1.0/ga-release/cloudify-enterprise-cli-4.1.rpm
+    default: http://repository.cloudifysource.org/cloudify/4.1.1/ga-release/cloudify-enterprise-cli-4.1.1ga.rpm
 
   create_secrets:
     description: >
