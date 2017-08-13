@@ -40,6 +40,7 @@ inputs:
     - http://repository.cloudifysource.org/cloudify/wagons/cloudify-aws-plugin/1.4.11/cloudify_aws_plugin-1.4.11-py27-none-linux_x86_64-centos-Core.wgn
     - http://repository.cloudifysource.org/cloudify/wagons/cloudify-aws-plugin/1.4.12/cloudify_aws_plugin-1.4.12-py27-none-linux_x86_64-centos-Core.wgn
     - http://repository.cloudifysource.org/cloudify/wagons/cloudify-aws-plugin/1.4.13/cloudify_aws_plugin-1.4.13-py27-none-linux_x86_64-centos-Core.wgn
+    - http://repository.cloudifysource.org/cloudify/wagons/cloudify-aws-plugin/1.5/cloudify_aws_plugin-1.5-py27-none-linux_x86_64-centos-Core.wgn
     - https://github.com/cloudify-incubator/cloudify-awssdk-plugin/releases/download/1.0.0/cloudify_awssdk_plugin-1.0.0-py27-none-any-none-none.wgn
     - http://repository.cloudifysource.org/cloudify/wagons/cloudify-openstack-plugin/2.0.1/cloudify_openstack_plugin-2.0.1-py27-none-linux_x86_64-centos-Core.wgn
     - https://github.com/cloudify-cosmo/cloudify-openstack-plugin/releases/download/2.2.0/cloudify_openstack_plugin-2.2.0-py27-none-linux_x86_64-centos-Core.wgn
