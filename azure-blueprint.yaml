@@ -89,19 +89,6 @@ inputs:
       Resolving the IP for manager setup.
     default: { get_attribute: [ cloudify_host, public_ip ] }
 
-  plugin_urls:
-    description: >
-      Plugins used in AWS blueprint examples.
-    default:
-    - https://github.com/cloudify-incubator/cloudify-utilities-plugin/releases/download/1.2.5/cloudify_utilities_plugin-1.2.5-py27-none-linux_x86_64-centos-Core.wgn
-    - http://repository.cloudifysource.org/cloudify/wagons/cloudify-azure-plugin/1.4.1/cloudify_azure_plugin-1.4.1-py27-none-linux_x86_64-centos-Core.wgn
-    - https://github.com/cloudify-incubator/cloudify-azure-plugin/releases/download/1.4.3/cloudify_azure_plugin-1.4.3-py27-none-linux_x86_64.wgn
-    - http://repository.cloudifysource.org/cloudify/wagons/cloudify-diamond-plugin/1.3.5/cloudify_diamond_plugin-1.3.5-py27-none-linux_x86_64-centos-Core.wgn
-    - http://repository.cloudifysource.org/cloudify/wagons/cloudify-diamond-plugin/1.3.5/cloudify_diamond_plugin-1.3.5-py27-none-linux_x86_64-Ubuntu-trusty.wgn
-    - http://repository.cloudifysource.org/cloudify/wagons/cloudify-fabric-plugin/1.5/cloudify_fabric_plugin-1.5-py27-none-linux_x86_64-centos-Core.wgn
-    - https://github.com/cloudify-incubator/cloudify-kubernetes-plugin/releases/download/1.1.0/cloudify_kubernetes_plugin-1.1.0-py27-none-linux_x86_64-centos-Core.wgn
-    - https://github.com/cloudify-incubator/cloudify-kubernetes-plugin/releases/download/1.0.0/cloudify_kubernetes_plugin-1.0.0-py27-none-linux_x86_64.wgn
-
   secrets:
     description: >
       key, value pairs of secrets used in AWS blueprint examples.
