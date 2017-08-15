@@ -263,6 +263,7 @@ $ cfy uninstall --allow-custom-parameters -p ignore_failure=true --task-retries=
 
 # Troubleshooting
 
+
 ## 502 Bad Gateway
 
 - If `cfy profiles use ...` fails with this output, the service has started in error state. Try restarting the VM.
@@ -276,6 +277,7 @@ $ cfy uninstall --allow-custom-parameters -p ignore_failure=true --task-retries=
 </html>
 ```
 
+
 ## [Errno 61] Connection refused
 
 - If `cfy profiles use ...` fails with the following output, then the server is refusing your connection because of too many requests. Most likely this is an issue with your network. Expect this issue to come up a lot until your network service improves.
@@ -285,6 +287,7 @@ Attempting to connect...
 HTTPConnectionPool(host='**.***.***.***', port=80): Max retries exceeded with url: /api/v3/provider/context (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x10d9d0590>: Failed to establish a new connection: [Errno 61] Connection refused',))
 ```
 
+
 ## Connection aborted, BadStatusLine
 
 - If `cfy profiles use ...` fails with the following output, check the internet connection.
@@ -293,6 +296,7 @@ HTTPConnectionPool(host='**.***.***.***', port=80): Max retries exceeded with ur
 Attempting to connect...
 Can't use manager 34.226.3.116. ('Connection aborted.', BadStatusLine("''",))
 ```
+
 
 ## InfluxDB wont start
 
@@ -316,10 +320,22 @@ Can't use manager 34.226.3.116. ('Connection aborted.', BadStatusLine("''",))
 [10.239.1.41] out:
 [10.239.1.41] out:
 ```
+
+
 ## Invalid Block Device Mapping
 
 - If `cfy install...` results in the below error, update the cloudify_host_block_device_mapping section to '/dev/sda1' in your input file.
 
 ```shell
 <Response><Errors><Error><Code>InvalidBlockDeviceMapping</Code><Message>Invalid device name /dev/sda</Message></Error></Errors><RequestID>c1419ad6-5a27-457d-a8b7-d70c40ac8093</RequestID></Response>
+```
+
+
+## Instance type Availability Zone Mismatch
+
+- If `cfy install ... aws-blueprint.yaml` execution fails with this error code, AWS is currently restricting deployments in your availability zone. Trying changing the availability zone to one of those suggested in the error message.
+
+
+```
+<Response><Errors><Error><Code>Unsupported</Code><Message>Your requested instance type (t1.micro) is not supported in your requested Availability Zone (us-east-1e). Please retry your request by not specifying an Availability Zone or choosing us-east-1a, us-east-1b, us-east-1d, us-east-1c.</Message></Error></Errors><RequestID>c00ced89-5e1d-4bcc-aac1-a8eff6e19935</RequestID></Response>
 ```
