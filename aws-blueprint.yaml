@@ -3,6 +3,7 @@ tosca_definitions_version: cloudify_dsl_1_3
 imports:
   - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/4.1/resources/rest-service/cloudify/types/types.yaml
   - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-aws-plugin/1.5/plugin.yaml
+  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-awssdk-plugin/master/plugin.yaml
   - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.2.5/plugin.yaml
   - imports/manager-configuration.yaml
 
@@ -15,10 +16,10 @@ inputs:
     description: YOUR AWS SECRET ACCESS KEY
 
   ec2_region_name:
-    default: us-east-1
+    default: us-west-1
 
   ec2_region_endpoint:
-    default: ec2.us-east-1.amazonaws.com
+    default: ec2.us-west-1.amazonaws.com
 
   cloudify_image_username:
     default: centos
@@ -36,26 +37,11 @@ inputs:
     default: { concat: [ { get_input: local_ssh_directory }, { get_input: manager_key_name } ] }
 
   availability_zone:
-    default: us-east-1e
+    default: us-west-1c
 
   default_tags:
     default:
       owner: hello@getcloudify.org
-
-  nat_image_id:
-    description: >
-      An AWS NAT instance AMI. Default is for region us-east-1.
-      For other regions, search Community AMIs: amzn-ami-vpc-nat-pv-2014.09.1.x86_64-ebs.
-    default: ami-224dc94a
-
-  nat_instance_type:
-    default: t1.micro
-
-  nat_instance_block_device_mapping:
-    default:
-      '/dev/sda1':
-        size: 8
-        delete_on_termination: true
 
   cloudify_host_block_device_mapping:
     default:
@@ -73,16 +59,16 @@ inputs:
         ami-d195e3bd on sa-east-1 region
         ami-ab210ed0 on us-east-1 region
       For a vanilla CentOS ami, try: ami-0fbdf765 (us-east-1), change cloudify_image_username: ec2-user, and change cloudify_host_block_device_mapping from '/dev/sda1' to '/dev/sda'.
-    default: ami-ab210ed0
+    default: ami-58361d38
 
   cloudify_instance_type:
     default: m3.large
 
   centos_core_image:
-    default: ami-0fbdf765
+    default: ami-36f7a656
 
   ubuntu_trusty_image:
-    default: ami-772aa961
+    default: ami-b2527ad2
 
   manager_ip:
     description: >
@@ -138,6 +124,11 @@ dsl_definitions:
     ec2_region_name: { get_input: ec2_region_name }
     ec2_region_endpoint: { get_input: ec2_region_endpoint }
 
+  aws_config: &aws_config
+    aws_access_key_id: { get_input: aws_access_key_id }
+    aws_secret_access_key: { get_input: aws_secret_access_key }
+    region_name: { get_input: ec2_region_name }
+
 node_templates:
 
   manager_key:
@@ -173,13 +164,6 @@ node_templates:
             store_private_key_material: true
 
   subnet0_nic_eip0:
-    type: cloudify.aws.nodes.ElasticIP
-    properties:
-      aws_config: *client_config
-      tags: { get_input: default_tags }
-      domain: vpc
-
-  subnet0_nic_eip1:
     type: cloudify.aws.nodes.ElasticIP
     properties:
       aws_config: *client_config
@@ -228,20 +212,25 @@ node_templates:
     - type: cloudify.relationships.depends_on
       target: internet_gateway
 
-  nat_instance_security_group:
-    type: cloudify.aws.nodes.SecurityGroup
+  elasticip_nat_gateway:
+    type: cloudify.aws.nodes.ElasticIP
     properties:
       aws_config: *client_config
       tags: { get_input: default_tags }
-      description: Cloudify Community AMI NAT Security Group
-      rules:
-      - ip_protocol: -1
-        from_port: -1
-        to_port: -1
-        cidr_ip: 0.0.0.0/0
+      domain: vpc
     relationships:
-    - type: cloudify.aws.relationships.security_group_contained_in_vpc
-      target: vpc
+    - type: cloudify.relationships.depends_on
+      target: subnet1
+
+  nat_gateway:
+    type: cloudify.nodes.aws.ec2.NATGateway
+    properties:
+      client_config: *aws_config
+    relationships:
+    - type: cloudify.relationships.depends_on
+      target: subnet0
+    - type: cloudify.relationships.depends_on
+      target: elasticip_nat_gateway
 
   cloudify_security_group:
     type: cloudify.aws.nodes.SecurityGroup
@@ -315,44 +304,6 @@ node_templates:
       - type: cloudify.aws.relationships.connected_to_security_group
         target: cloudify_security_group
 
-  subnet0_nic1:
-    type: cloudify.aws.nodes.Interface
-    properties:
-      aws_config: *client_config
-      tags: { get_input: default_tags }
-    relationships:
-      - type: cloudify.aws.relationships.connected_to_subnet
-        target: subnet0
-      - type: cloudify.aws.relationships.connected_to_elastic_ip
-        target: subnet0_nic_eip1
-      - type: cloudify.aws.relationships.connected_to_security_group
-        target: nat_instance_security_group
-
-  nat_instance:
-    type: cloudify.aws.nodes.Instance
-    properties:
-      aws_config: *client_config
-      tags: { get_input: default_tags }
-      name: NAT Instance
-      image_id: { get_input: nat_image_id }
-      instance_type: { get_input: nat_instance_type }
-      agent_config:
-        install_method: none
-      parameters:
-        block_device_map: { get_input: nat_instance_block_device_mapping }
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        configure:
-          implementation: aws.cloudify_aws.ec2.instance.modify_attributes
-          inputs:
-            new_attributes:
-              sourceDestCheck: false
-    relationships:
-      - type: cloudify.aws.relationships.instance_contained_in_subnet
-        target: subnet0
-      - type: cloudify.aws.relationships.instance_connected_to_eni
-        target: subnet0_nic1
-
   route_table0:
     type: cloudify.aws.nodes.RouteTable
     properties:
@@ -372,21 +323,19 @@ node_templates:
       aws_config: *client_config
       tags: { get_input: default_tags }
     relationships:
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        create:
-          implementation: aws.cloudify_aws.vpc.routetable.create_route_table
-          inputs:
-            routes:
-              - destination_cidr_block: 0.0.0.0/0
-                instance_id: { get_attribute: [ nat_instance, aws_resource_id ] }
     relationships:
       - type: cloudify.aws.relationships.routetable_contained_in_vpc
         target: vpc
       - type: cloudify.aws.relationships.routetable_associated_with_subnet
         target: subnet1
-      - type: cloudify.relationships.connected_to
-        target: nat_instance
+      - type: cloudify.aws.relationships.route_table_to_gateway
+        target: nat_gateway
+        target_interfaces:
+          cloudify.interfaces.relationship_lifecycle:
+            establish:
+              implementation: aws.cloudify_aws.vpc.routetable.create_route_to_gateway
+              inputs:
+                destination_cidr_block: 0.0.0.0/0
 
   cloudify_host_cloud_config:
     type: cloudify.nodes.CloudInit.CloudConfig

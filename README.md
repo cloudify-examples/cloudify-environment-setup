@@ -32,16 +32,14 @@ When you execute the blueprint, you will provision the following resources in yo
 
 * AWS Infrastructure:
   * subnet0_nic_eip0
-  * subnet0_nic_eip1
+  * elasticip_nat_gateway
   * vpc
   * internet_gateway
   * subnet0
   * subnet1
-  * nat_instance_security_group
+  * nat_gateway
   * cloudify_security_group
   * subnet0_nic0
-  * subnet0_nic1
-  * nat_instance
   * route_table0
   * route_table1
   * cloudify_host_cloud_config
