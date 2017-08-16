@@ -158,30 +158,27 @@ Once you have decided on a Manager installation method, you can proceed on the p
 
 3. To install your environment's infrastructure, execute one of the example commands below, inserting your account credentials in the _*.yaml_ file located in the _inputs_ directory for your IaaS.
 
-_Note: This command should be run from the same directory in which you extracted the blueprint in the previous step._
+_Note: This command should be run from the same directory in which you extracted the blueprint in the previous step. If it stops after installing plugins (some users have noted this issue), run the command again without '--install-plugins' to complete the setup._
 
 For AWS run:
 
 ```shell
 $ cfy install cloudify-environment-setup-latest/aws-blueprint.yaml -i cloudify-environment-setup-latest/inputs/aws.yaml --install-plugins
-$ cfy install cloudify-environment-setup-latest/aws-blueprint.yaml -i cloudify-environment-setup-latest/inputs/aws.yaml -b manager
 ```
 
 For Azure run:
 
 ```shell
 $ cfy install cloudify-environment-setup-latest/azure-blueprint.yaml -i cloudify-environment-setup-latest/inputs/azure.yaml --install-plugins
-$ cfy install cloudify-environment-setup-latest/azure-blueprint.yaml -i cloudify-environment-setup-latest/inputs/azure.yaml -b manager
 ```
 
 For Openstack run:
 
 ```shell
 $ cfy install cloudify-environment-setup-latest/openstack-blueprint.yaml -i cloudify-environment-setup-latest/inputs/openstack.yaml --install-plugins
-$ cfy install cloudify-environment-setup-latest/openstack-blueprint.yaml -i cloudify-environment-setup-latest/inputs/openstack.yaml -b manager
 ```
 
-_Only run this step if you are not using a pre-baked image._
+_Only run the below Manager Setup Steps if you are not using a pre-baked image._
 
 ## Manager Setup Steps
 
