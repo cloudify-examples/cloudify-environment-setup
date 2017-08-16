@@ -254,7 +254,7 @@ When you are ready to uninstall your environment, run:
 
 ```shell
 $ cfy profiles use local
-$ cfy uninstall --allow-custom-parameters -p ignore_failure=true --task-retries=30 --task-retry-interval=5 -b manager
+$ cfy uninstall --allow-custom-parameters -p ignore_failure=true --task-retries=30 --task-retry-interval=5 -b cloudify-environment-setup-latest
 
 ```
 
