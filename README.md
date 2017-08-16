@@ -178,15 +178,14 @@ For Openstack run:
 $ cfy install cloudify-environment-setup-latest/openstack-blueprint.yaml -i cloudify-environment-setup-latest/inputs/openstack.yaml --install-plugins
 ```
 
-_Only run the below Manager Setup Steps if you are not using a pre-baked image._
 
 ## Manager Setup Steps
 
 Manager Setup is the last phase of execution. A file called `./instructions.txt` is created in your `cwd`. It documents follow-up steps to complete Manager configuration.
 
-_If you choose the `bootstrap: true` option before execution, you will need to follow all of the steps documented in the `./instructions.txt` file._
+_If you chose the `bootstrap: true` option before execution, you will need to follow all of the steps documented in the `./instructions.txt` file._
 
-_If you choose the `bootstrap: false` option before execution, you will only need to execute step 4._
+_If you chose the `bootstrap: false` option before execution, you will only need to execute step 4._
 
 
 These are the Manager setup steps:
