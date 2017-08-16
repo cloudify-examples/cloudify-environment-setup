@@ -183,11 +183,6 @@ $ cfy install cloudify-environment-setup-latest/openstack-blueprint.yaml -i clou
 
 Manager Setup is the last phase of execution. A file called `./instructions.txt` is created in your `cwd`. It documents follow-up steps to complete Manager configuration.
 
-_If you chose the `bootstrap: true` option before execution, you will need to follow all of the steps documented in the `./instructions.txt` file._
-
-_If you chose the `bootstrap: false` option before execution, you will only need to execute step 4._
-
-
 These are the Manager setup steps:
 
 0. Run this command to get the path to the instructions file:
@@ -205,10 +200,16 @@ The output should look similar to:
 }
 ```
 
+### IMPORTANT
+_If you chose the `bootstrap: true` option before execution, you will need to follow all of the steps documented in the `./instructions.txt` file._
+
+_If you chose the `bootstrap: false` option before execution, you will only need to execute step 4._
+
+
 1. SSH into your Manager VM.
 
 ```shell
-ssh -i ~/.ssh/cfy-manager-key-os centos@10.239.0.209
+ssh -i ~/.ssh/cfy-manager-key-os centos@xxx.xxx.xxx.xxx
 ```
 
 2. Install the Cloudify RPM on the Manager VM.
@@ -220,13 +221,13 @@ sudo rpm -i http://repository.cloudifysource.org/cloudify/4.1.0/ga-release/cloud
 3. Bootstrap the Manager:
 
 ```shell
-cfy bootstrap /opt/cfy/cloudify-manager-blueprints/simple-manager-blueprint.yaml -i public_ip=10.239.0.209 -i private_ip=192.168.120.5 -i ssh_user=centos -i ssh_key_filename=/home/centos/.ssh/key.pem -i agents_user=ubuntu -i ignore_bootstrap_validations=false -i admin_username=admin -i admin_password=admin
+cfy bootstrap /opt/cfy/cloudify-manager-blueprints/simple-manager-blueprint.yaml -i public_ip=xxx.xxx.xxx.xxx -i private_ip=192.168.120.5 -i ssh_user=centos -i ssh_key_filename=/home/centos/.ssh/key.pem -i agents_user=ubuntu -i ignore_bootstrap_validations=false -i admin_username=admin -i admin_password=admin
 ```
 
 4. Exit your Manager VM and initialize your CLI profile.
 
 ```shell
-cfy profiles use -s centos -k ~/.ssh/cfy-manager-key-os -u admin -p admin -t default_tenant 10.239.0.209
+cfy profiles use -s centos -k ~/.ssh/cfy-manager-key-os -u admin -p admin -t default_tenant xxx.xxx.xxx.xxx
 ```
 
 5. Create Secrets.
