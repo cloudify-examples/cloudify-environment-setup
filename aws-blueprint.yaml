@@ -48,7 +48,7 @@ inputs:
       '/dev/sda1':
         delete_on_termination: true
 
-  cloudify_ami:
+  cloudify_manager_ami:
     description: >
       A Cloudify Manager AMI. Default is for region us-east-1.
       Other available regions:
@@ -59,16 +59,10 @@ inputs:
         ami-d195e3bd on sa-east-1 region
         ami-ab210ed0 on us-east-1 region
       For a vanilla CentOS ami, try: ami-0fbdf765 (us-east-1), change cloudify_image_username: ec2-user, and change cloudify_host_block_device_mapping from '/dev/sda1' to '/dev/sda'.
-    default: ami-58361d38
+    default: { get_attribute: [ cloudify_manager_ami, aws_resource_id ] }
 
   cloudify_instance_type:
     default: m3.large
-
-  centos_core_image:
-    default: ami-36f7a656
-
-  ubuntu_trusty_image:
-    default: ami-b2527ad2
 
   manager_ip:
     description: >
@@ -96,9 +90,9 @@ inputs:
       - key: availability_zone
         value: { get_input: availability_zone }
       - key: ubuntu_trusty_image
-        value: { get_input: ubuntu_trusty_image }
+        value: { get_attribute: [ ubuntu_trusty_ami, aws_resource_id ] }
       - key: centos_core_image
-        value: { get_input: centos_core_image }
+        value: { get_attribute: [ centos_core_ami, aws_resource_id ] }
       - key: agent_key_public
         value: { get_attribute: [ agent_key, public_key_export ] }
       - key: agent_key_private
@@ -130,6 +124,48 @@ dsl_definitions:
     region_name: { get_input: ec2_region_name }
 
 node_templates:
+
+  centos_core_ami:
+    type: cloudify.nodes.aws.ec2.Image
+    properties:
+      resource_config:
+        kwargs:
+          Filters:
+          - Name: name
+            Values:
+            - 'CentOS 7.3.1611 x86_64 with cloud-init (HVM)'
+          - Name: owner-id
+            Values:
+            - '057448758665'
+      client_config: *aws_config
+
+  cloudify_manager_ami:
+    type: cloudify.nodes.aws.ec2.Image
+    properties:
+      resource_config:
+        kwargs:
+          Filters:
+          - Name: name
+            Values:
+            - Cloudify-Manager-4.1.1
+          - Name: owner-id
+            Values:
+            - '263721492972'
+      client_config: *aws_config
+
+  ubuntu_trusty_ami:
+    type: cloudify.nodes.aws.ec2.Image
+    properties:
+      resource_config:
+        kwargs:
+          Filters:
+          - Name: name
+            Values:
+            - 'ubuntu/images/hvm-ssd/ubuntu-trusty-14.04-amd64-server-20170727'
+          - Name: owner-id
+            Values:
+            - '099720109477'
+      client_config: *aws_config
 
   manager_key:
     type: cloudify.keys.nodes.RSAKey
@@ -220,7 +256,7 @@ node_templates:
       domain: vpc
     relationships:
     - type: cloudify.relationships.depends_on
-      target: subnet1
+      target: subnet0
 
   nat_gateway:
     type: cloudify.nodes.aws.ec2.NATGateway
@@ -364,7 +400,7 @@ node_templates:
       agent_config:
         install_method: none
         user: { get_input: cloudify_image_username }
-      image_id: { get_input: cloudify_ami }
+      image_id: ''
       instance_type: { get_input: cloudify_instance_type }
     interfaces:
       cloudify.interfaces.lifecycle:
@@ -372,6 +408,7 @@ node_templates:
           implementation: aws.cloudify_aws.ec2.instance.create
           inputs:
             args:
+              image_id: { get_input: cloudify_manager_ami }
               block_device_map: { get_input: cloudify_host_block_device_mapping }
               placement: { get_input: availability_zone }
               user_data: { get_attribute: [ cloudify_host_cloud_config, cloud_config ] }
@@ -380,6 +417,12 @@ node_templates:
         target: cloudify_host_cloud_config
       - type: cloudify.aws.relationships.instance_connected_to_eni
         target: subnet0_nic0
+      - type: cloudify.relationships.depends_on
+        target: cloudify_manager_ami
+      - type: cloudify.relationships.depends_on
+        target: centos_core_ami
+      - type: cloudify.relationships.depends_on
+        target: ubuntu_trusty_ami
 
 outputs:
 
