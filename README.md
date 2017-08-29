@@ -5,6 +5,8 @@ _Note: Without bootstrap, deployment should take 5 minutes. With bootstrap, up t
 
 To ask a question or report an issue, please use [github issues](https://github.com/cloudify-examples/cloudify-environment-setup/issues) or visit the [Cloudify users groups](https://groups.google.com/forum/#!forum/cloudify-users).
 
+*Alternative: Deploy your Cloudify Manager using an [IaaS Variant](https://github.com/cloudify-examples/environment-setup-variants).*
+
 
 # Purpose
 
@@ -75,6 +77,15 @@ When you execute the blueprint, you will provision the following resources in yo
   * cloudify_host_cloud_config
   * cloudify_host
 
+* GCP Infrastructure
+  * cfys0ip0 - Static External IP
+  * cfynetwork
+  * cfynetwork_subnet0
+  * cfynetwork_subnet1
+  * cfycloudify_security_group
+  * cfycloudify_security_group1
+  * controller_key
+  * cfycloudify_host - Cloudify Manager VM
 
 #### Secrets
 
@@ -120,7 +131,23 @@ When you execute the blueprint, you will provision the following resources in yo
   * keystone_password: Your Keystone V2 password.
   * keystone_username:Your Keystone V2 username.
 
-_Note: This command should be run from the same directory in which you extracted the blueprint in the previous step._
+
+* GCP Secrets
+  * client_x509_cert_url
+  * client_email
+  * client_id
+  * project_id
+  * private_key_id
+  * private_key
+  * management_network_name
+  * zone
+  * region
+  * management_subnetwork_name
+  * private_subnetwork_name
+  * ubuntu_trusty_image
+  * centos_core_image
+  * small_instance_type
+
 
 ## Preparation
 
