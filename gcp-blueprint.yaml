@@ -8,16 +8,28 @@ imports:
 
 inputs:
 
-  gcp_auth_file:
-    description: PATH TO YOUR GCP AUTH JSON FILE
+  client_x509_cert_url:
+    type: string
 
-  gcp_project_name:
-    description: YOUR GCP PROJECT ID
+  client_email:
+    type: string
 
-  gcp_zone:
+  client_id:
+    type: string
+
+  project_id:
+    type: string
+
+  private_key_id:
+    type: string
+
+  private_key:
+    type: string
+
+  zone:
     default: us-east1-b
 
-  gcp_region:
+  region:
     default: us-east1
 
   network_subnet0_cidr:
@@ -38,64 +50,62 @@ inputs:
   manager_key_name:
     default: cfy-manager-key
 
-  agent_key_name:
-    default: cfy-agent-key
-
   cloudify_key_file:
     default: { concat: [ { get_input: local_ssh_directory }, { get_input: manager_key_name } ] }
-
-  cloudify_key_file_pub:
-    default: { concat: [ { get_input: local_ssh_directory }, { get_input: agent_key_name } ] }
 
   cloudify_image:
     default: https://www.googleapis.com/compute/v1/projects/centos-cloud/global/images/centos-7-v20170523
 
-  gcp_small_instance_type:
-    default: n1-standard-2
+  centos_core_image:
+    default: https://www.googleapis.com/compute/v1/projects/centos-cloud/global/images/centos-7-v20170523
 
-  gcp_ubuntu_trusty_image:
+  ubuntu_trusty_image:
     default: https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-1404-trusty-v20170517
+
+  small_instance_type:
+    default: n1-standard-2
 
   manager_ip:
     description: >
       Resolving the IP for manager setup.
     default: { get_attribute: [ network_subnet0_staticip, address ] }
 
-  plugin_urls:
-    description: >
-      Plugins used in AWS blueprint examples.
-    default:
-    - https://github.com/cloudify-incubator/cloudify-utilities-plugin/releases/download/1.2.5/cloudify_utilities_plugin-1.2.5-py27-none-linux_x86_64-centos-Core.wgn
-    - http://repository.cloudifysource.org/cloudify/wagons/cloudify-gcp-plugin/1.0/cloudify_gcp_plugin-1.0-py27-none-linux_x86_64-centos-Core.wgn
-    - http://repository.cloudifysource.org/cloudify/wagons/cloudify-diamond-plugin/1.3.5/cloudify_diamond_plugin-1.3.5-py27-none-linux_x86_64-centos-Core.wgn
-    - http://repository.cloudifysource.org/cloudify/wagons/cloudify-diamond-plugin/1.3.5/cloudify_diamond_plugin-1.3.5-py27-none-linux_x86_64-Ubuntu-trusty.wgn
-
   secrets:
     description: >
       key, value pairs of secrets used in AWS blueprint examples.
     default:
-    - key: gcp_auth_file
-      value: { get_input: gcp_auth_file }
-    - key: gcp_project_name
-      value: { get_input: gcp_project_name }
-    - key: gcp_management_network_name
+    - key: client_x509_cert_url
+      value: { get_input: client_x509_cert_url }
+    - key: client_email
+      value: { get_input: client_email }
+    - key: client_id
+      value: { get_input: client_id }
+    - key: project_id
+      value: { get_input: project_id }
+    - key: private_key_id
+      value: { get_input: private_key_id }
+    - key: private_key
+      value: { get_input: private_key }
+    - key: management_network_name
       value: { get_property: [ network, name ] }
-    - key: gcp_zone
-      value: { get_input: gcp_zone }
-    - key: gcp_region
-      value: { get_input: gcp_region }
-    - key: gcp_management_subnetwork_name
+    - key: zone
+      value: { get_input: zone }
+    - key: region
+      value: { get_input: region }
+    - key: management_subnetwork_name
       value: { get_property: [ network_subnet0, name ] }
-    - key: gcp_private_subnetwork_name
+    - key: private_subnetwork_name
       value: { get_property: [ network_subnet1, name ] }
-    - key: gcp_ubuntu_trusty_image
-      value: { get_input: gcp_ubuntu_trusty_image }
-    - key: gcp_small_instance_type
-      value: { get_input: gcp_small_instance_type }
+    - key: ubuntu_trusty_image
+      value: { get_input: ubuntu_trusty_image }
+    - key: centos_core_image
+      value: { get_input: centos_core_image }
+    - key: small_instance_type
+      value: { get_input: small_instance_type }
     - key: agent_key_public
-      value: { get_attribute: [ agent_key, public_key_export ] }
+      value: { get_attribute: [ manager_key, public_key_export ] }
     - key: agent_key_private
-      value: { get_attribute: [ agent_key, private_key_export ] }
+      value: { get_attribute: [ manager_key, private_key_export ] }
 
   create_inputs:
     default:
@@ -111,10 +121,21 @@ inputs:
         - '/.ssh/key.pem'
 
 dsl_definitions:
+
   client_config: &client_config
-    auth: { get_input: gcp_auth_file }
-    project: { get_input: gcp_project_name }
-    zone: { get_input: gcp_zone }
+    auth:
+      type: service_account
+      auth_uri: https://accounts.google.com/o/oauth2/auth
+      token_uri: https://accounts.google.com/o/oauth2/token
+      auth_provider_x509_cert_url: https://www.googleapis.com/oauth2/v1/certs
+      client_x509_cert_url: { get_input: client_x509_cert_url }
+      client_email: { get_input: client_email }
+      client_id: { get_input: client_id }
+      project_id: { get_input: project_id }
+      private_key_id: { get_input: private_key_id }
+      private_key: { get_input: private_key }
+    project: { get_input: project_id }
+    zone: { get_input: zone }
 
 node_templates:
 
@@ -134,26 +155,10 @@ node_templates:
           inputs:
             store_private_key_material: true
 
-  agent_key:
-    type: cloudify.keys.nodes.RSAKey
-    properties:
-      resource_config:
-        public_key_path: { concat: [ { get_input: local_ssh_directory }, { get_input: agent_key_name }, '.pub' ] }
-        private_key_path: { concat: [ { get_input: local_ssh_directory }, { get_input: agent_key_name } ] }
-        openssh_format: true
-      use_secret_store: false
-      key_name: { get_input: agent_key_name }
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        create:
-          implementation: keys.cloudify_ssh_key.operations.create
-          inputs:
-            store_private_key_material: true
-
   network_subnet0_staticip:
     type: cloudify.gcp.nodes.Address
     properties:
-      region: { get_input: gcp_region }
+      region: { get_input: region }
       gcp_config: *client_config
       name: { concat: [ { get_input: resource_prefix }, 's0ip0' ] }
 
@@ -170,7 +175,7 @@ node_templates:
       gcp_config: *client_config
       name: { concat: [ { get_input: resource_prefix }, 'network_subnet0' ] }
       subnet: { get_input: network_subnet0_cidr }
-      region: { get_input: gcp_region }
+      region: { get_input: region }
     relationships:
     - type: cloudify.gcp.relationships.contained_in_network
       target: network
@@ -181,7 +186,7 @@ node_templates:
       gcp_config: *client_config
       name: { concat: [ { get_input: resource_prefix }, 'network_subnet1' ] }
       subnet: { get_input: network_subnet1_cidr }
-      region: { get_input: gcp_region }
+      region: { get_input: region }
     relationships:
     - type: cloudify.gcp.relationships.contained_in_network
       target: network
@@ -232,8 +237,8 @@ node_templates:
       name: { concat: [ { get_input: resource_prefix }, 'cloudify_host' ] }
       gcp_config: *client_config
       image_id: { get_input: cloudify_image }
-      instance_type: { get_input: gcp_small_instance_type }
-      zone: { get_input: gcp_zone }
+      instance_type: { get_input: small_instance_type }
+      zone: { get_input: zone }
       agent_config:
         install_method: none
     relationships:
