@@ -5,6 +5,8 @@ _Note: Without bootstrap, deployment should take 5 minutes. With bootstrap, up t
 
 To ask a question or report an issue, please use [github issues](https://github.com/cloudify-examples/cloudify-environment-setup/issues) or visit the [Cloudify users groups](https://groups.google.com/forum/#!forum/cloudify-users).
 
+*Alternative: Deploy your Cloudify Manager using an [IaaS Variant](https://github.com/cloudify-examples/environment-setup-variants).*
+
 
 # Purpose
 
@@ -17,6 +19,7 @@ This blueprint sets up a reference environment for executing the Cloudify Exampl
   - [AWS Credentials](http://docs.aws.amazon.com/general/latest/gr/aws-sec-cred-types.html)
   - [Openstack Credentials](https://docs.openstack.org/user-guide/common/cli-set-environment-variables-using-openstack-rc.html) - *skip step 5 in those instructions -- do not "source" the file*.
   - [Azure Credentials](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-manager-api-authentication)
+  - [GCP Credentials](https://cloud.google.com/docs/authentication/getting-started)
 - A virtual environment application such as [virtualenv](https://virtualenv.pypa.io/en/stable/) installed on your computer.
 - [Cloudify CLI](http://docs.getcloudify.org/4.1.0/installation/from-packages/) installed in a virtual environment.
 
@@ -74,6 +77,15 @@ When you execute the blueprint, you will provision the following resources in yo
   * cloudify_host_cloud_config
   * cloudify_host
 
+* GCP Infrastructure
+  * cfys0ip0 - Static External IP
+  * cfynetwork
+  * cfynetwork_subnet0
+  * cfynetwork_subnet1
+  * cfycloudify_security_group
+  * cfycloudify_security_group1
+  * controller_key
+  * cfycloudify_host - Cloudify Manager VM
 
 #### Secrets
 
@@ -119,7 +131,23 @@ When you execute the blueprint, you will provision the following resources in yo
   * keystone_password: Your Keystone V2 password.
   * keystone_username:Your Keystone V2 username.
 
-_Note: This command should be run from the same directory in which you extracted the blueprint in the previous step._
+
+* GCP Secrets
+  * client_x509_cert_url
+  * client_email
+  * client_id
+  * project_id
+  * private_key_id
+  * private_key
+  * management_network_name
+  * zone
+  * region
+  * management_subnetwork_name
+  * private_subnetwork_name
+  * ubuntu_trusty_image
+  * centos_core_image
+  * small_instance_type
+
 
 ## Preparation
 
@@ -142,7 +170,7 @@ You will find a list of pre-bootstrapped images on [Cloudify's Downloads page](h
     Also, change the "bootstrap: True" to "False" in your inputs file.
   - Openstack: Follow [these instructions](https://docs.openstack.org/user-guide/dashboard-manage-images.html) to upload the [Openstack QCOW image](https://repository.cloudifysource.org/cloudify/4.1.1/ga-release/cloudify-enterprise-manager-4.1.1ga.qcow2) to Openstack.
     You will also need to find the correct values for cloudify_image, centos_core_image, ubuntu_trusty_image, small_image_flavor, large_image_flavor. Ask your Openstack Admin for more info on these.
-  - Azure: There is not currently a pre-bootstrapped image for Azure, so bootstrap is the only option.
+  - Azure & GCP: There is not currently a pre-bootstrapped image for Azure and GCP, so bootstrap is the only option.
 
 
 
@@ -174,6 +202,12 @@ For Openstack run:
 
 ```shell
 $ cfy install cloudify-environment-setup-latest/openstack-blueprint.yaml -i cloudify-environment-setup-latest/inputs/openstack.yaml --install-plugins
+```
+
+For GCP run:
+
+```shell
+$ cfy install cloudify-environment-setup-latest/gcp-blueprint.yaml -i cloudify-environment-setup-latest/inputs/gcp.yaml --install-plugins
 ```
 
 
