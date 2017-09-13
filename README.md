@@ -189,25 +189,25 @@ _Note: This command should be run from the same directory in which you extracted
 For AWS run:
 
 ```shell
-$ cfy install cloudify-environment-setup-latest/aws-blueprint.yaml -i cloudify-environment-setup-latest/inputs/aws.yaml --install-plugins
+$ cfy install cloudify-environment-setup-latest/aws-blueprint.yaml -i cloudify-environment-setup-latest/inputs/aws.yaml --install-plugins --task-retries=30 --task-retry-interval=5
 ```
 
 For Azure run:
 
 ```shell
-$ cfy install cloudify-environment-setup-latest/azure-blueprint.yaml -i cloudify-environment-setup-latest/inputs/azure.yaml --install-plugins
+$ cfy install cloudify-environment-setup-latest/azure-blueprint.yaml -i cloudify-environment-setup-latest/inputs/azure.yaml --install-plugins --task-retries=30 --task-retry-interval=5
 ```
 
 For Openstack run:
 
 ```shell
-$ cfy install cloudify-environment-setup-latest/openstack-blueprint.yaml -i cloudify-environment-setup-latest/inputs/openstack.yaml --install-plugins
+$ cfy install cloudify-environment-setup-latest/openstack-blueprint.yaml -i cloudify-environment-setup-latest/inputs/openstack.yaml --install-plugins --task-retries=30 --task-retry-interval=5
 ```
 
 For GCP run:
 
 ```shell
-$ cfy install cloudify-environment-setup-latest/gcp-blueprint.yaml -i cloudify-environment-setup-latest/inputs/gcp.yaml --install-plugins
+$ cfy install cloudify-environment-setup-latest/gcp-blueprint.yaml -i cloudify-environment-setup-latest/inputs/gcp.yaml --install-plugins --task-retries=30 --task-retry-interval=5
 ```
 
 
