@@ -68,7 +68,7 @@ inputs:
   manager_ip:
     description: >
       Resolving the IP for manager setup.
-    default: { get_attribute: [ network_subnet0_staticip, address ] }
+    default: { get_attribute: [ cloudify_host, networkInterfaces, 0, accessConfigs, 0, natIP ] }
 
   secrets:
     description: >
@@ -155,13 +155,6 @@ node_templates:
           inputs:
             store_private_key_material: true
 
-  network_subnet0_staticip:
-    type: cloudify.gcp.nodes.Address
-    properties:
-      region: { get_input: region }
-      gcp_config: *client_config
-      name: { concat: [ { get_input: resource_prefix }, 's0ip0' ] }
-
   network:
     type: cloudify.gcp.nodes.Network
     properties:
@@ -241,10 +234,9 @@ node_templates:
       zone: { get_input: zone }
       agent_config:
         install_method: none
+      external_ip: true
     relationships:
     - type: cloudify.gcp.relationships.contained_in_network
       target: network_subnet0
-    - type: cloudify.gcp.relationships.instance_connected_to_ip
-      target: network_subnet0_staticip
     - type: cloudify.gcp.relationships.instance_connected_to_keypair
       target: controller_key
