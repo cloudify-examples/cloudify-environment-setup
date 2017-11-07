@@ -193,7 +193,6 @@ node_templates:
         - 0.0.0.0/0
       allowed:
         tcp: [22, 80, 443]
-        icmp:
     relationships:
       - type: cloudify.relationships.connected_to
         target: network
