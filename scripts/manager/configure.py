@@ -5,7 +5,6 @@ from cloudify.exceptions import OperationRetry
 from cloudify.state import ctx_parameters as inputs
 from cloudify_rest_client.client import CloudifyClient
 from cloudify_rest_client.exceptions import CloudifyClientError
-from cloudify_cli.utils import generate_progress_handler
 from requests.exceptions import ConnectionError
 from time import sleep
 

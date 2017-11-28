@@ -1,10 +1,9 @@
 tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
-  - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/4.1/resources/rest-service/cloudify/types/types.yaml
-  - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-aws-plugin/1.5/plugin.yaml
-  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-awssdk-plugin/master/plugin.yaml
-  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.2.5/plugin.yaml
+  - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/4.2/resources/rest-service/cloudify/types/types.yaml
+  - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-aws-plugin/1.5.1/plugin.yaml
+  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-awssdk-plugin/1.0.0/plugin.yaml
   - imports/manager-configuration.yaml
 
 inputs:
@@ -147,7 +146,7 @@ node_templates:
           Filters:
           - Name: name
             Values:
-            - Cloudify-Manager-4.1.1
+            - Cloudify-Manager-4.2ga
           - Name: owner-id
             Values:
             - '263721492972'
