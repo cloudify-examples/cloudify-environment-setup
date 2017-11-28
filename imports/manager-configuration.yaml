@@ -1,8 +1,5 @@
 imports:
   - http://cloudify.co/spec/fabric-plugin/1.5/plugin.yaml
-  # - http://www.getcloudify.org/spec/utilities-plugin/1.4.0/plugin.yaml
-  # - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.4.0/cloudify_cloudinit/types.yaml
-  # - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.4.0/cloudify_ssh_key/types.yaml
   - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.2.5/plugin.yaml
 
 inputs:
