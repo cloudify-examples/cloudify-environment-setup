@@ -355,7 +355,7 @@ node_templates:
     type: cloudify.openstack.nodes.Port
     properties:
       openstack_config: *client_config
-      resource_id: network0_subnet_port
+      resource_id: network1_subnet_port
     relationships:
     - type: cloudify.relationships.contained_in
       target: network1
