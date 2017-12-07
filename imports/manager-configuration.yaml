@@ -2,6 +2,7 @@ imports:
   - http://cloudify.co/spec/fabric-plugin/1.5/plugin.yaml
   - http://www.getcloudify.org/spec/utilities-plugin/1.4.1/plugin.yaml
   - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.4.1/cloudify_cloudinit/types.yaml
+  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.4.1/cloudify_ssh_key/types.yaml
 
 inputs:
 
@@ -39,7 +40,7 @@ inputs:
     - https://github.com/cloudify-incubator/cloudify-utilities-plugin/releases/download/1.2.5/cloudify_utilities_plugin-1.2.5-py27-none-linux_x86_64-centos-Core.wgn
     - https://s3-eu-west-1.amazonaws.com/cloudify-release-eu/cloudify/wagons/cloudify-utilities-plugin/1.4.1/cloudify_utilities_plugin-1.4.1-py27-none-linux_x86_64-centos-Core.wgn
     - https://s3-eu-west-1.amazonaws.com/cloudify-release-eu/cloudify/wagons/cloudify-openstack-plugin/2.3.0/cloudify_openstack_plugin-2.3.0-py27-none-linux_x86_64-centos-Core.wgn
-    - http://repository.cloudifysource.org/cloudify/wagons/cloudify-openstack-plugin/2.4.1.1/cloudify_openstack_plugin-2.4.1.1-py27-none-linux_x86_64.wgn
+    - http://repository.cloudifysource.org/cloudify/wagons/cloudify-openstack-plugin/2.4.1.1/cloudify_openstack_plugin-2.4.1.1-py27-none-linux_x86_64-centos-Core.wgn
     - https://github.com/cloudify-cosmo/cloudify-aws-plugin/releases/download/1.5.1.2/cloudify_aws_plugin-1.5.1.2-py27-none-linux_x86_64-centos-Core.wgn
     - https://github.com/cloudify-incubator/cloudify-awssdk-plugin/releases/download/1.0.0/cloudify_awssdk_plugin-1.0.0-py27-none-any-none-none.wgn
     - https://github.com/cloudify-incubator/cloudify-azure-plugin/releases/download/1.4.3/cloudify_azure_plugin-1.4.3-py27-none-linux_x86_64.wgn

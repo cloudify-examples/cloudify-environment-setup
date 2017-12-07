@@ -403,9 +403,9 @@ node_templates:
   cloudify_host_yum:
     type: cloudify.azure.nodes.compute.VirtualMachineExtension
     properties:
-      location: { get_secret: location }
+      location: { get_input: location }
       retry_after: { get_input: retry_after }
-      azure_config: *azure_config
+      azure_config: *client_config
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
