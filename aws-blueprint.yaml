@@ -1,9 +1,9 @@
 tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
-  - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/4.2/resources/rest-service/cloudify/types/types.yaml
+  - http://www.getcloudify.org/spec/cloudify/4.2/types.yaml
+  - http://www.getcloudify.org/spec/awssdk-plugin/1.2.0.1/plugin.yaml
   - https://github.com/cloudify-cosmo/cloudify-aws-plugin/releases/download/1.5.1.2/plugin.yaml
-  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-awssdk-plugin/1.0.0/plugin.yaml
   - imports/manager-configuration.yaml
 
 inputs:
