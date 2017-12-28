@@ -1,9 +1,16 @@
+# CFY-GCP environment bootstrap inputs 
+client_x509_cert_url:
 client_email: ".....@developer.gserviceaccount.com"
 client_id: "....."
 project_id: "....."
 private_key_id: "...."
 private_key: "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANsdfsdfdssdfzoBpqZ4yAzRCKT/68bpM=\n-----END PRIVATE KEY-----"
-region: 'europe-west1'
-zone: 'europe-west1-b'
+zone: us-east1-b
+region: us-east1
+network_subnet0_cidr: 10.11.12.0/22
+network_subnet1_cidr: 10.11.16.0/22
+resource_prefix: cfy
+cloudify_image_username: centos
+local_ssh_directory: '~/.ssh/'
+manager_key_name: cfy-manager-key
 bootstrap: true
-
