@@ -40,18 +40,18 @@ inputs:
   nameservers:
     default: [8.8.4.4, 8.8.8.8]
 
-  network0_subnet_cidr:
+  public_network_subnet_cidr:
     default: 192.168.120.0/24
 
-  network0_subnet_allocation_pools:
+  public_network_subnet_allocation_pools:
     default:
     - start: 192.168.120.2
       end: 192.168.120.254
 
-  network1_subnet_cidr:
+  private_network_subnet_cidr:
     default: 192.168.121.0/24
 
-  network1_subnet_allocation_pools:
+  private_network_subnet_allocation_pools:
     default:
     - start: 192.168.121.2
       end: 192.168.121.254
@@ -77,7 +77,7 @@ inputs:
   manager_ip:
     description: >
       Resolving the IP for manager setup.
-    default: { get_attribute: [ network0_subnet_port_fip, floating_ip_address ] }
+    default: { get_attribute: [ public_network_subnet_port_fip, floating_ip_address ] }
 
   secrets:
     description: >
@@ -96,15 +96,15 @@ inputs:
     - key: external_network_name
       value: { get_property: [ external_network, resource_id ] }
     - key: router_name
-      value: { get_property: [ network0_router, resource_id ] }
+      value: { get_attribute: [ public_network_router, external_name ] }
     - key: public_network_name
-      value: { get_property: [ network0, resource_id ] }
+      value: { get_attribute: [ public_network, external_name ] }
     - key: private_network_name
-      value: { get_property: [ network1, resource_id ] }
+      value: { get_attribute: [ private_network, external_name ] }
     - key: public_subnet_name
-      value: { get_property: [ network0_subnet, resource_id ] }
+      value: { get_attribute: [ public_network_subnet, external_name ] }
     - key: private_subnet_name
-      value: { get_property: [ network1_subnet, resource_id ] }
+      value: { get_attribute: [ private_network_subnet, external_name ] }
     - key: ubuntu_trusty_image
       value: { get_input: ubuntu_trusty_image }
     - key: centos_core_image
@@ -122,8 +122,8 @@ inputs:
     default:
       local_private_key: { get_input: cloudify_key_file  }
       rpm_package: { get_input: cli_package_url }
-      public_ip: { get_attribute: [ network0_subnet_port_fip, floating_ip_address ] }
-      private_ip: { get_attribute: [ network0_subnet_port, fixed_ip_address ] }
+      public_ip: { get_attribute: [ public_network_subnet_port_fip, floating_ip_address ] }
+      private_ip: { get_attribute: [ public_network_subnet_port, fixed_ip_address ] }
       ssh_user: { get_input: cloudify_image_username }
       ssh_key_filename:
         concat:
@@ -189,71 +189,65 @@ node_templates:
       use_external_resource: true
       resource_id: { get_input: external_network_name }
 
-  network0_subnet_port_fip:
+  public_network_subnet_port_fip:
     type: cloudify.openstack.nodes.FloatingIP
     properties:
       openstack_config: *client_config
       floatingip:
         floating_network_name: { get_input: external_network_name }
 
-  network0:
+  public_network:
     type: cloudify.openstack.nodes.Network
     properties:
       openstack_config: *client_config
-      resource_id: network0
 
-  network1:
+  private_network:
     type: cloudify.openstack.nodes.Network
     properties:
       openstack_config: *client_config
-      resource_id: network1
 
-  network0_router:
+  public_network_router:
     type: cloudify.openstack.nodes.Router
     properties:
       openstack_config: *client_config
-      resource_id: network0_router
     relationships:
     - type: cloudify.relationships.connected_to
       target: external_network
 
-  network0_subnet:
+  public_network_subnet:
     type: cloudify.openstack.nodes.Subnet
     properties:
       openstack_config: *client_config
-      resource_id: network0_subnet
       subnet:
         ip_version: 4
-        cidr: { get_input: network0_subnet_cidr }
+        cidr: { get_input: public_network_subnet_cidr }
         dns_nameservers: { get_input: nameservers }
-        allocation_pools: { get_input: network0_subnet_allocation_pools }
+        allocation_pools: { get_input: public_network_subnet_allocation_pools }
     relationships:
     - type: cloudify.relationships.contained_in
-      target: network0
+      target: public_network
     - type: cloudify.openstack.subnet_connected_to_router
-      target: network0_router
+      target: public_network_router
 
-  network1_subnet:
+  private_network_subnet:
     type: cloudify.openstack.nodes.Subnet
     properties:
       openstack_config: *client_config
-      resource_id: network1_subnet
       subnet:
         ip_version: 4
-        cidr: { get_input: network1_subnet_cidr }
+        cidr: { get_input: private_network_subnet_cidr }
         dns_nameservers: { get_input: nameservers }
-        allocation_pools: { get_input: network1_subnet_allocation_pools }
+        allocation_pools: { get_input: private_network_subnet_allocation_pools }
     relationships:
     - type: cloudify.relationships.contained_in
-      target: network1
+      target: private_network
     - type: cloudify.openstack.subnet_connected_to_router
-      target: network0_router
+      target: public_network_router
 
   cloudify_security_group:
     type: cloudify.openstack.nodes.SecurityGroup
     properties:
       openstack_config: *client_config
-      resource_id: cloudify_security_group
       rules:
       - remote_ip_prefix: 0.0.0.0/0
         port_range_min: null
@@ -271,96 +265,94 @@ node_templates:
         port_range_min: 443
         port_range_max: 443
         protocol: tcp
-      - remote_ip_prefix: { get_property: [ network0_subnet, subnet, cidr ] }
+      - remote_ip_prefix: { get_property: [ public_network_subnet, subnet, cidr ] }
         port_range_min: 5671
         port_range_max: 5671
         protocol: tcp
-      - remote_ip_prefix: { get_property: [ network1_subnet, subnet, cidr ] }
+      - remote_ip_prefix: { get_property: [ private_network_subnet, subnet, cidr ] }
         port_range_min: 5671
         port_range_max: 5671
         protocol: tcp
-      - remote_ip_prefix: { get_property: [ network0_subnet, subnet, cidr ] }
+      - remote_ip_prefix: { get_property: [ public_network_subnet, subnet, cidr ] }
         port_range_min: 8086
         port_range_max: 8086
         protocol: tcp
-      - remote_ip_prefix: { get_property: [ network1_subnet, subnet, cidr ] }
+      - remote_ip_prefix: { get_property: [ private_network_subnet, subnet, cidr ] }
         port_range_min: 8086
         port_range_max: 8086
         protocol: tcp
-      - remote_ip_prefix: { get_property: [ network0_subnet, subnet, cidr ] }
+      - remote_ip_prefix: { get_property: [ public_network_subnet, subnet, cidr ] }
         port_range_min: 8101
         port_range_max: 8101
         protocol: tcp
-      - remote_ip_prefix: { get_property: [ network1_subnet, subnet, cidr ] }
+      - remote_ip_prefix: { get_property: [ private_network_subnet, subnet, cidr ] }
         port_range_min: 8101
         port_range_max: 8101
         protocol: tcp
-      - remote_ip_prefix: { get_property: [ network0_subnet, subnet, cidr ] }
+      - remote_ip_prefix: { get_property: [ public_network_subnet, subnet, cidr ] }
         port_range_min: 53333
         port_range_max: 53333
         protocol: tcp
-      - remote_ip_prefix: { get_property: [ network1_subnet, subnet, cidr ] }
+      - remote_ip_prefix: { get_property: [ private_network_subnet, subnet, cidr ] }
         port_range_min: 53333
         port_range_max: 53333
         protocol: tcp
-      - remote_ip_prefix: { get_property: [ network0_subnet, subnet, cidr ] }
+      - remote_ip_prefix: { get_property: [ public_network_subnet, subnet, cidr ] }
         port_range_min: 8300
         port_range_max: 8301
         protocol: tcp
-      - remote_ip_prefix: { get_property: [ network1_subnet, subnet, cidr ] }
+      - remote_ip_prefix: { get_property: [ private_network_subnet, subnet, cidr ] }
         port_range_min: 8300
         port_range_max: 8301
         protocol: tcp
-      - remote_ip_prefix: { get_property: [ network0_subnet, subnet, cidr ] }
+      - remote_ip_prefix: { get_property: [ public_network_subnet, subnet, cidr ] }
         port_range_min: 8500
         port_range_max: 8500
         protocol: tcp
-      - remote_ip_prefix: { get_property: [ network1_subnet, subnet, cidr ] }
+      - remote_ip_prefix: { get_property: [ private_network_subnet, subnet, cidr ] }
         port_range_min: 8500
         port_range_max: 8500
         protocol: tcp
-      - remote_ip_prefix: { get_property: [ network0_subnet, subnet, cidr ] }
+      - remote_ip_prefix: { get_property: [ public_network_subnet, subnet, cidr ] }
         port_range_min: 22000
         port_range_max: 22000
         protocol: tcp
-      - remote_ip_prefix: { get_property: [ network1_subnet, subnet, cidr ] }
+      - remote_ip_prefix: { get_property: [ private_network_subnet, subnet, cidr ] }
         port_range_min: 22000
         port_range_max: 22000
         protocol: tcp
-      - remote_ip_prefix: { get_property: [ network0_subnet, subnet, cidr ] }
+      - remote_ip_prefix: { get_property: [ public_network_subnet, subnet, cidr ] }
         port_range_min: 15432
         port_range_max: 15432
         protocol: tcp
-      - remote_ip_prefix: { get_property: [ network1_subnet, subnet, cidr ] }
+      - remote_ip_prefix: { get_property: [ private_network_subnet, subnet, cidr ] }
         port_range_min: 15432
         port_range_max: 15432
         protocol: tcp
 
-  network0_subnet_port:
+  public_network_subnet_port:
     type: cloudify.openstack.nodes.Port
     properties:
       openstack_config: *client_config
-      resource_id: network0_subnet_port
     relationships:
     - type: cloudify.relationships.contained_in
-      target: network0
+      target: public_network
     - type: cloudify.relationships.depends_on
-      target: network0_subnet
+      target: public_network_subnet
     - type: cloudify.openstack.port_connected_to_security_group
       target: cloudify_security_group
     - type: cloudify.openstack.port_connected_to_floating_ip
-      target: network0_subnet_port_fip
+      target: public_network_subnet_port_fip
 
-  network1_subnet_port:
+  private_network_subnet_port:
     type: cloudify.openstack.nodes.Port
     properties:
       openstack_config: *client_config
-      resource_id: network1_subnet_port
     relationships:
     - type: cloudify.relationships.contained_in
-      target: network1
+      target: private_network
     - type: cloudify.relationships.depends_on
-      target: network1_subnet
+      target: private_network_subnet
     - type: cloudify.openstack.port_connected_to_security_group
       target: cloudify_security_group
 
@@ -402,9 +394,9 @@ node_templates:
               userdata: { get_attribute: [ cloudify_host_cloud_config, cloud_config ] }
     relationships:
     - type: cloudify.openstack.server_connected_to_port
-      target: network0_subnet_port
+      target: public_network_subnet_port
     - type: cloudify.openstack.server_connected_to_port
-      target: network1_subnet_port
+      target: private_network_subnet_port
     - type: cloudify.relationships.depends_on
       target: cloudify_host_cloud_config
 
