@@ -2,7 +2,8 @@
 # Cloudify Environment Setup
 
 **NOTE: This setup will create a Cloudify Manager and then configure it.**
-**The setup will not configure and existing Cloudify Manager installation.**
+
+**The setup will not configure an existing Cloudify Manager installation.**
 
 _Note: Without bootstrap, deployment should take 5 minutes. With bootstrap, up to 40 minutes._
 
