@@ -35,7 +35,7 @@ inputs:
     - https://github.com/cloudify-incubator/cloudify-kubernetes-plugin/releases/download/2.0.0/cloudify_kubernetes_plugin-2.0.0-py27-none-linux_x86_64-centos-Core.wgn
     - http://repository.cloudifysource.org/cloudify/wagons/cloudify-utilities-plugin/1.4.2.1/cloudify_utilities_plugin-1.4.2.1-py27-none-linux_x86_64-centos-Core.wgn
     - https://s3-eu-west-1.amazonaws.com/cloudify-release-eu/cloudify/wagons/cloudify-openstack-plugin/2.3.0/cloudify_openstack_plugin-2.3.0-py27-none-linux_x86_64-centos-Core.wgn
-    - https://github.com/cloudify-cosmo/cloudify-openstack-plugin/releases/download/2.5.0/cloudify_openstack_plugin-2.5.0-py27-none-linux_x86_64-centos-Core.wgn
+    - https://github.com/cloudify-cosmo/cloudify-openstack-plugin/releases/download/2.5.2/cloudify_openstack_plugin-2.5.2-py27-none-linux_x86_64-centos-Core.wgn
     - https://github.com/cloudify-cosmo/cloudify-aws-plugin/releases/download/1.5.1.2/cloudify_aws_plugin-1.5.1.2-py27-none-linux_x86_64-centos-Core.wgn
     - http://repository.cloudifysource.org/cloudify/wagons/cloudify-awssdk-plugin/1.2.0.1/cloudify_awssdk_plugin-1.2.0.1-py27-none-linux_x86_64-centos-Core.wgn
     - https://github.com/cloudify-incubator/cloudify-azure-plugin/releases/download/1.4.3/cloudify_azure_plugin-1.4.3-py27-none-linux_x86_64-centos-Core.wgn
