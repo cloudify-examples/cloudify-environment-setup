@@ -5,4 +5,3 @@ client_secret: -cut-
 location: eastus
 resource_prefix: cfy
 resource_suffix: 00
-bootstrap: True

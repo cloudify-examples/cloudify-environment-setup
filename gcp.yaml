@@ -47,13 +47,10 @@ inputs:
     default: '~/.ssh/'
 
   manager_key_name:
-    default: cfy-manager-key
+    default: cfy-key-gcp
 
   cloudify_key_file:
     default: { concat: [ { get_input: local_ssh_directory }, { get_input: manager_key_name } ] }
-
-  cloudify_image:
-    default: https://www.googleapis.com/compute/v1/projects/centos-cloud/global/images/centos-7-v20170523
 
   centos_core_image:
     default: https://www.googleapis.com/compute/v1/projects/centos-cloud/global/images/centos-7-v20170523
@@ -64,7 +61,12 @@ inputs:
   small_instance_type:
     default: n1-standard-2
 
-  manager_ip:
+  private_ip:
+    description: >
+      Resolving the IP for manager setup.
+    default: { get_attribute: [ cloudify_host, ip ] }
+
+  public_ip:
     description: >
       Resolving the IP for manager setup.
     default: { get_attribute: [ cloudify_host, networkInterfaces, 0, accessConfigs, 0, natIP ] }
@@ -85,12 +87,28 @@ inputs:
       value: { get_input: private_key_id }
     - key: private_key
       value: { get_input: private_key }
-    - key: management_network_name
-      value: { get_property: [ network, name ] }
     - key: zone
       value: { get_input: zone }
     - key: region
       value: { get_input: region }
+    - key: gcp_client_x509_cert_url
+      value: { get_input: client_x509_cert_url }
+    - key: gcp_client_email
+      value: { get_input: client_email }
+    - key: gcp_client_id
+      value: { get_input: client_id }
+    - key: gcp_project_id
+      value: { get_input: project_id }
+    - key: gcp_private_key_id
+      value: { get_input: private_key_id }
+    - key: gcp_private_key
+      value: { get_input: private_key }
+    - key: gcp_zone
+      value: { get_input: zone }
+    - key: gcp_region
+      value: { get_input: region }
+    - key: management_network_name
+      value: { get_property: [ network, name ] }
     - key: management_subnetwork_name
       value: { get_property: [ network_subnet0, name ] }
     - key: private_subnetwork_name
@@ -105,19 +123,6 @@ inputs:
       value: { get_attribute: [ manager_key, public_key_export ] }
     - key: agent_key_private
       value: { get_attribute: [ manager_key, private_key_export ] }
-
-  create_inputs:
-    default:
-      local_private_key: { get_input: cloudify_key_file  }
-      rpm_package: { get_input: cli_package_url }
-      public_ip: { get_input: manager_ip }
-      private_ip: { get_attribute: [ cloudify_host, ip ] }
-      ssh_user: { get_input: cloudify_image_username }
-      ssh_key_filename:
-        concat:
-        - '/home/'
-        - { get_input: cloudify_image_username }
-        - '/.ssh/key.pem'
 
 dsl_definitions:
 
@@ -228,14 +233,28 @@ node_templates:
     properties:
       name: { concat: [ { get_input: resource_prefix }, 'cloudify_host' ] }
       gcp_config: *client_config
-      image_id: { get_input: cloudify_image }
+      image_id: { get_input: centos_core_image }
       instance_type: { get_input: small_instance_type }
       zone: { get_input: zone }
       agent_config:
         install_method: none
       external_ip: true
+      startup_script:
+        type: string
+        script:
+          concat:
+          - |
+            $!/bin/bash
+          - { concat: [ 'usermod -aG wheel', { get_input: cloudify_image_username } ] }
+          - |
+            yum install -y python-backports-ssl_match_hostname python-setuptools python-backports
     relationships:
     - type: cloudify.gcp.relationships.contained_in_network
       target: network_subnet0
     - type: cloudify.gcp.relationships.instance_connected_to_keypair
       target: controller_key
+
+outputs:
+
+  manager_ip:
+    value: { get_input: public_ip }
