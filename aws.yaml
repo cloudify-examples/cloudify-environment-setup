@@ -1,0 +1,459 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+imports:
+  - http://www.getcloudify.org/spec/cloudify/4.3/types.yaml
+  - http://www.getcloudify.org/spec/awssdk-plugin/2.0.0/plugin.yaml
+  - http://www.getcloudify.org/spec/utilities-plugin/1.5.0/plugin.yaml
+  - imports/manager-configuration.yaml
+
+inputs:
+
+  aws_access_key_id:
+    description: YOUR AWS ACCESS KEY ID
+
+  aws_secret_access_key:
+    description: YOUR AWS SECRET ACCESS KEY
+
+  ec2_region_name:
+    default: us-west-1
+
+  ec2_region_endpoint:
+    default: ec2.us-west-1.amazonaws.com
+
+  cloudify_image_username:
+    default: centos
+
+  local_ssh_directory:
+    default: '~/.ssh/'
+
+  manager_key_name:
+    default: cfy-manager-key-aws
+
+  agent_key_name:
+    default: cfy-agent-key-aws
+
+  cloudify_key_file:
+    default: { concat: [ { get_input: local_ssh_directory }, { get_input: manager_key_name } ] }
+
+  availability_zone:
+    default: us-west-1c
+
+  ami:
+    description: >
+      An AWS AMI. Tested with a Centos Core image.
+    default: { get_attribute: [ centos_core_ami, aws_resource_id ] }
+
+  instance_type:
+    default: m3.large
+
+  private_ip:
+    description: >
+      Resolving the IP for manager setup.
+    default: { get_attribute: [ cloudify_host, ip ] }
+
+  public_ip:
+    description: >
+      Resolving the IP for manager setup.
+    default: { get_attribute: [ ip, aws_resource_id ] }
+
+  secrets:
+    description: >
+      key, value pairs of secrets used in AWS blueprint examples.
+    default:
+      - key: aws_access_key_id
+        value: { get_input: aws_access_key_id }
+      - key: aws_secret_access_key
+        value: { get_input: aws_secret_access_key }
+      - key: ec2_region_name
+        value: { get_input: ec2_region_name }
+      - key: ec2_region_endpoint
+        value: { get_input: ec2_region_endpoint }
+      - key: vpc_id
+        value: { get_attribute: [ vpc, aws_resource_id ] }
+      - key: public_subnet_id
+        value: { get_attribute: [ public_subnet, aws_resource_id ] }
+      - key: private_subnet_id
+        value: { get_attribute: [ private_subnet, aws_resource_id ] }
+      - key: availability_zone
+        value: { get_input: availability_zone }
+      - key: ubuntu_trusty_image
+        value: { get_attribute: [ ubuntu_trusty_ami, aws_resource_id ] }
+      - key: centos_core_image
+        value: { get_attribute: [ centos_core_ami, aws_resource_id ] }
+      - key: agent_key_public
+        value: { get_attribute: [ agent_key, public_key_export ] }
+      - key: agent_key_private
+        value: { get_attribute: [ agent_key, private_key_export ] }
+
+  vpc_cidr:
+    default: 10.10.0.0/16
+
+  public_subnet_cidr:
+    default: 10.10.4.0/24
+
+  private_subnet_cidr:
+    default: 10.10.5.0/24
+
+dsl_definitions:
+
+  client_config: &client_config
+    aws_access_key_id: { get_input: aws_access_key_id }
+    aws_secret_access_key: { get_input: aws_secret_access_key }
+    region_name: { get_input: ec2_region_name }
+
+node_templates:
+
+  centos_core_ami:
+    type: cloudify.nodes.aws.ec2.Image
+    properties:
+      resource_config:
+        kwargs:
+          Filters:
+          - Name: name
+            Values:
+            - 'CentOS 7.3.1611 x86_64 with cloud-init (HVM)'
+          - Name: owner-id
+            Values:
+            - '057448758665'
+      client_config: *client_config
+
+  ubuntu_trusty_ami:
+    type: cloudify.nodes.aws.ec2.Image
+    properties:
+      resource_config:
+        kwargs:
+          Filters:
+          - Name: name
+            Values:
+            - 'ubuntu/images/hvm-ssd/ubuntu-trusty-14.04-amd64-server-20170727'
+          - Name: owner-id
+            Values:
+            - '099720109477'
+      client_config: *client_config
+
+  manager_key:
+    type: cloudify.keys.nodes.RSAKey
+    properties:
+      resource_config:
+        public_key_path: { concat: [ { get_input: local_ssh_directory }, { get_input: manager_key_name }, '.pub' ] }
+        private_key_path: { concat: [ { get_input: local_ssh_directory }, { get_input: manager_key_name } ] }
+        openssh_format: true
+      use_secret_store: false
+      key_name: { get_input: manager_key_name }
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: keys.cloudify_ssh_key.operations.create
+          inputs:
+            store_private_key_material: true
+
+  agent_key:
+    type: cloudify.keys.nodes.RSAKey
+    properties:
+      resource_config:
+        public_key_path: { concat: [ { get_input: local_ssh_directory }, { get_input: agent_key_name }, '.pub' ] }
+        private_key_path: { concat: [ { get_input: local_ssh_directory }, { get_input: agent_key_name } ] }
+        openssh_format: true
+      use_secret_store: false
+      key_name: { get_input: agent_key_name }
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: keys.cloudify_ssh_key.operations.create
+          inputs:
+            store_private_key_material: true
+
+  vpc:
+    type: cloudify.nodes.aws.ec2.Vpc
+    properties:
+      resource_config:
+        kwargs:
+          CidrBlock: { get_input: vpc_cidr }
+      client_config: *client_config
+
+  internet_gateway:
+    type: cloudify.nodes.aws.ec2.InternetGateway
+    properties:
+      client_config: *client_config
+    relationships:
+    - type: cloudify.relationships.connected_to
+      target: vpc
+
+  public_subnet:
+    type: cloudify.nodes.aws.ec2.Subnet
+    properties:
+      resource_config:
+        kwargs:
+          CidrBlock: { get_input: public_subnet_cidr }
+          AvailabilityZone: { get_input: availability_zone }
+      client_config: *client_config
+    relationships:
+    - type: cloudify.relationships.depends_on
+      target: vpc
+    - type: cloudify.relationships.depends_on
+      target: internet_gateway
+
+  private_subnet:
+    type: cloudify.nodes.aws.ec2.Subnet
+    properties:
+      resource_config:
+        kwargs:
+          CidrBlock: { get_input: private_subnet_cidr }
+          AvailabilityZone: { get_input: availability_zone }
+      client_config: *client_config
+    relationships:
+    - type: cloudify.relationships.depends_on
+      target: vpc
+    - type: cloudify.relationships.depends_on
+      target: internet_gateway
+
+  public_subnet_routetable:
+    type: cloudify.nodes.aws.ec2.RouteTable
+    properties:
+      client_config: *client_config
+    relationships:
+    - type: cloudify.relationships.contained_in
+      target: vpc
+    - type: cloudify.relationships.connected_to
+      target: public_subnet
+
+  private_subnet_routetable:
+    type: cloudify.nodes.aws.ec2.RouteTable
+    properties:
+      client_config: *client_config
+    relationships:
+    - type: cloudify.relationships.contained_in
+      target: vpc
+    - type: cloudify.relationships.connected_to
+      target: private_subnet
+
+  route_public_subnet_internet_gateway:
+    type: cloudify.nodes.aws.ec2.Route
+    properties:
+      resource_config:
+        kwargs:
+          DestinationCidrBlock: '0.0.0.0/0'
+      client_config: *client_config
+    relationships:
+    - type: cloudify.relationships.contained_in
+      target: public_subnet_routetable
+    - type: cloudify.relationships.connected_to
+      target: internet_gateway
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        stop: {}
+
+  nat_gateway_ip:
+    type: cloudify.nodes.aws.ec2.ElasticIP
+    properties:
+      resource_config:
+        kwargs:
+          Domain: 'vpc'
+      client_config: *client_config
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        stop: {}
+
+  nat_gateway:
+    type: cloudify.nodes.aws.ec2.NATGateway
+    properties:
+      client_config: *client_config
+    relationships:
+    - type: cloudify.relationships.depends_on
+      target: public_subnet
+    - type: cloudify.relationships.depends_on
+      target: nat_gateway_ip
+
+  route_private_subnet_nat_gateway:
+    type: cloudify.nodes.aws.ec2.Route
+    properties:
+      resource_config:
+        kwargs:
+          DestinationCidrBlock: '0.0.0.0/0'
+      client_config: *client_config
+    relationships:
+    - type: cloudify.relationships.contained_in
+      target: private_subnet_routetable
+    - type: cloudify.relationships.connected_to
+      target: nat_gateway
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        stop: {}
+
+  ip:
+    type: cloudify.nodes.aws.ec2.ElasticIP
+    properties:
+      resource_config:
+        kwargs:
+          Domain: 'vpc'
+      client_config: *client_config
+    relationships:
+    - type: cloudify.relationships.depends_on
+      target: nic
+
+  security_group_rules:
+    type: cloudify.nodes.aws.ec2.SecurityGroupRuleIngress
+    properties:
+      client_config: *client_config
+      resource_config:
+        kwargs:
+          IpPermissions:
+          - IpProtocol: icmp
+            FromPort: -1
+            ToPort: -1
+            IpRanges:
+            - CidrIp: 0.0.0.0/0
+          - IpProtocol: tcp
+            FromPort: 22
+            ToPort: 22
+            IpRanges:
+            - CidrIp: 0.0.0.0/0
+          - IpProtocol: tcp
+            FromPort: 80
+            ToPort: 80
+            IpRanges:
+            - CidrIp: 0.0.0.0/0
+          - IpProtocol: tcp
+            FromPort: 443
+            ToPort: 443
+            IpRanges:
+            - CidrIp: 0.0.0.0/0
+          - IpProtocol: tcp
+            FromPort: 5671
+            ToPort: 5671
+            IpRanges:
+            - CidrIp: 0.0.0.0/0
+          - IpProtocol: tcp
+            FromPort: 8101
+            ToPort: 8101
+            IpRanges:
+            - CidrIp: 0.0.0.0/0
+          - IpProtocol: tcp
+            FromPort: 53333
+            ToPort: 53333
+            IpRanges:
+            - CidrIp: 0.0.0.0/0
+          - IpProtocol: tcp
+            FromPort: 8300
+            ToPort: 8300
+            IpRanges:
+            - CidrIp: 0.0.0.0/0
+          - IpProtocol: tcp
+            FromPort: 8301
+            ToPort: 8301
+            IpRanges:
+            - CidrIp: 0.0.0.0/0
+          - IpProtocol: tcp
+            FromPort: 8500
+            ToPort: 8500
+            IpRanges:
+            - CidrIp: 0.0.0.0/0
+          - IpProtocol: tcp
+            FromPort: 22000
+            ToPort: 22000
+            IpRanges:
+            - CidrIp: 0.0.0.0/0
+          - IpProtocol: tcp
+            FromPort: 15432
+            ToPort: 15432
+            IpRanges:
+            - CidrIp: 0.0.0.0/0
+    relationships:
+    - type: cloudify.relationships.contained_in
+      target: security_group
+
+  security_group:
+    type: cloudify.nodes.aws.ec2.SecurityGroup
+    properties:
+      resource_config:
+        kwargs:
+          GroupName: CloudifyGroup
+          Description: Created by simple-infrastructure-blueprint aws.yaml.
+          VpcId: { get_attribute: [ vpc, aws_resource_id] }
+      client_config: *client_config
+    relationships:
+    - type: cloudify.relationships.depends_on
+      target: vpc
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        configure:
+          inputs:
+            resource_config: { get_property: [ SELF, resource_config, kwargs] }
+
+  cloudify_host_cloud_config:
+    type: cloudify.nodes.CloudInit.CloudConfig
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          inputs:
+            resource_config:
+              users:
+              - name: { get_input: cloudify_image_username }
+                primary-group: wheel
+                shell: /bin/bash
+                sudo: ['ALL=(ALL) NOPASSWD:ALL']
+                ssh-authorized-keys:
+                - { get_attribute: [ manager_key, public_key_export ] }
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: manager_key
+
+  nic:
+    type: cloudify.nodes.aws.ec2.Interface
+    properties:
+      client_config: *client_config
+      resource_config:
+        kwargs:
+          Description: Created by hello-world-blueprint aws-blueprint.yaml.
+          SubnetId: { get_attribute: [ public_subnet, aws_resource_id] }
+          Groups:
+          - { get_attribute: [ security_group, aws_resource_id ] }
+    relationships:
+    - type: cloudify.relationships.depends_on
+      target: public_subnet
+    - type: cloudify.relationships.depends_on
+      target: security_group
+    - type: cloudify.relationships.depends_on
+      target: security_group_rules
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        configure:
+          inputs:
+            resource_config: { get_property: [ SELF, resource_config, kwargs] }
+
+  cloudify_host:
+    type: cloudify.nodes.aws.ec2.Instances
+    properties:
+      agent_config:
+        install_method: none
+      resource_config:
+        kwargs:
+          MinCount: 1
+          MaxCount: 1
+          ImageId: { get_input: ami }
+          InstanceType: { get_input: instance_type }
+          BlockDeviceMappings:
+          - DeviceName: '/dev/sda1'
+            Ebs:
+              DeleteOnTermination: True
+          Placement:
+            AvailabilityZone: { get_input: availability_zone }
+          UserData: { get_attribute: [ cloudify_host_cloud_config, cloud_config ] }
+      client_config: *client_config
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: cloudify_host_cloud_config
+      - type: cloudify.relationships.depends_on
+        target: nic
+      - type: cloudify.relationships.depends_on
+        target: centos_core_ami              
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        configure:
+          inputs:
+            resource_config: { get_property: [ SELF, resource_config, kwargs] }
+
+outputs:
+
+  manager_ip:
+    value: { get_input: public_ip }

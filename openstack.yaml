@@ -1,8 +1,8 @@
 tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
-  - http://www.getcloudify.org/spec/cloudify/4.2/types.yaml
-  - http://www.getcloudify.org/spec/openstack-plugin/2.5.0/plugin.yaml
+  - http://www.getcloudify.org/spec/cloudify/4.3/types.yaml
+  - http://www.getcloudify.org/spec/openstack-plugin/2.7.1/plugin.yaml
   - imports/manager-configuration.yaml
 
 inputs:
@@ -10,7 +10,7 @@ inputs:
   username:
     description: OS_USERNAME as specified in Openstack RC file.
 
-  password:
+  keystone_password:
     description: Openstack user password.
 
   tenant_name:
@@ -56,9 +56,6 @@ inputs:
     - start: 192.168.121.2
       end: 192.168.121.254
 
-  cloudify_image:
-    type: string
-
   large_image_flavor:
     type: string
 
@@ -74,7 +71,12 @@ inputs:
   ubuntu_trusty_image:
     type: string
 
-  manager_ip:
+  private_ip:
+    description: >
+      Resolving the IP for manager setup.
+    default: { get_attribute: [ cloudify_host, ip ] }
+
+  public_ip:
     description: >
       Resolving the IP for manager setup.
     default: { get_attribute: [ public_network_subnet_port_fip, floating_ip_address ] }
@@ -86,12 +88,14 @@ inputs:
     - key: keystone_username
       value: { get_input: username }
     - key: keystone_password
-      value: { get_input: password }
+      value: { get_input: keystone_password }
     - key: keystone_tenant_name
       value: { get_input: tenant_name }
     - key: keystone_url
       value: { get_input: auth_url }
     - key: region
+      value: { get_input: region }
+    - key: keystone_region
       value: { get_input: region }
     - key: external_network_name
       value: { get_property: [ external_network, resource_id ] }
@@ -118,35 +122,14 @@ inputs:
     - key: agent_key_private
       value: { get_attribute: [ agent_key, private_key_export ] }
 
-  create_inputs:
-    default:
-      local_private_key: { get_input: cloudify_key_file  }
-      rpm_package: { get_input: cli_package_url }
-      public_ip: { get_attribute: [ public_network_subnet_port_fip, floating_ip_address ] }
-      private_ip: { get_attribute: [ public_network_subnet_port, fixed_ip_address ] }
-      ssh_user: { get_input: cloudify_image_username }
-      ssh_key_filename:
-        concat:
-        - '/home/'
-        - { get_input: cloudify_image_username }
-        - '/.ssh/key.pem'
-
 dsl_definitions:
+
   client_config: &client_config
     username: { get_input: username }
-    password: { get_input: password }
+    password: { get_input: keystone_password }
     tenant_name: { get_input: tenant_name }
     auth_url: { get_input: auth_url }
     region: { get_input: region }
-
-node_types:
-
-  cloudify.nodes.CloudConfig:
-    derived_from: cloudify.nodes.Root
-    properties:
-      resource_config:
-        default:
-          encode_base64: false
 
 node_templates:
 
@@ -265,67 +248,39 @@ node_templates:
         port_range_min: 443
         port_range_max: 443
         protocol: tcp
-      - remote_ip_prefix: { get_property: [ public_network_subnet, subnet, cidr ] }
+      - remote_ip_prefix: 0.0.0.0/0
         port_range_min: 5671
         port_range_max: 5671
         protocol: tcp
-      - remote_ip_prefix: { get_property: [ private_network_subnet, subnet, cidr ] }
-        port_range_min: 5671
-        port_range_max: 5671
-        protocol: tcp
-      - remote_ip_prefix: { get_property: [ public_network_subnet, subnet, cidr ] }
+      - remote_ip_prefix: 0.0.0.0/0
         port_range_min: 8086
         port_range_max: 8086
         protocol: tcp
-      - remote_ip_prefix: { get_property: [ private_network_subnet, subnet, cidr ] }
-        port_range_min: 8086
-        port_range_max: 8086
-        protocol: tcp
-      - remote_ip_prefix: { get_property: [ public_network_subnet, subnet, cidr ] }
+      - remote_ip_prefix: 0.0.0.0/0
         port_range_min: 8101
         port_range_max: 8101
         protocol: tcp
-      - remote_ip_prefix: { get_property: [ private_network_subnet, subnet, cidr ] }
-        port_range_min: 8101
-        port_range_max: 8101
-        protocol: tcp
-      - remote_ip_prefix: { get_property: [ public_network_subnet, subnet, cidr ] }
+      - remote_ip_prefix: 0.0.0.0/0
         port_range_min: 53333
         port_range_max: 53333
         protocol: tcp
-      - remote_ip_prefix: { get_property: [ private_network_subnet, subnet, cidr ] }
-        port_range_min: 53333
-        port_range_max: 53333
+      - remote_ip_prefix: 0.0.0.0/0
+        port_range_min: 53229
+        port_range_max: 53229
         protocol: tcp
-      - remote_ip_prefix: { get_property: [ public_network_subnet, subnet, cidr ] }
+      - remote_ip_prefix: 0.0.0.0/0
         port_range_min: 8300
         port_range_max: 8301
         protocol: tcp
-      - remote_ip_prefix: { get_property: [ private_network_subnet, subnet, cidr ] }
-        port_range_min: 8300
-        port_range_max: 8301
-        protocol: tcp
-      - remote_ip_prefix: { get_property: [ public_network_subnet, subnet, cidr ] }
+      - remote_ip_prefix: 0.0.0.0/0
         port_range_min: 8500
         port_range_max: 8500
         protocol: tcp
-      - remote_ip_prefix: { get_property: [ private_network_subnet, subnet, cidr ] }
-        port_range_min: 8500
-        port_range_max: 8500
-        protocol: tcp
-      - remote_ip_prefix: { get_property: [ public_network_subnet, subnet, cidr ] }
+      - remote_ip_prefix: 0.0.0.0/0
         port_range_min: 22000
         port_range_max: 22000
         protocol: tcp
-      - remote_ip_prefix: { get_property: [ private_network_subnet, subnet, cidr ] }
-        port_range_min: 22000
-        port_range_max: 22000
-        protocol: tcp
-      - remote_ip_prefix: { get_property: [ public_network_subnet, subnet, cidr ] }
-        port_range_min: 15432
-        port_range_max: 15432
-        protocol: tcp
-      - remote_ip_prefix: { get_property: [ private_network_subnet, subnet, cidr ] }
+      - remote_ip_prefix: 0.0.0.0/0
         port_range_min: 15432
         port_range_max: 15432
         protocol: tcp
@@ -370,6 +325,9 @@ node_templates:
                 sudo: ['ALL=(ALL) NOPASSWD:ALL']
                 ssh-authorized-keys:
                 - { get_attribute: [ manager_key, public_key_export ] }
+              runcmd:
+              - { concat: [ 'usermod -aG wheel ', { get_input: cloudify_image_username } ] }
+              - yum install -y python-backports-ssl_match_hostname python-setuptools python-backports
     relationships:
       - type: cloudify.relationships.depends_on
         target: manager_key
@@ -382,14 +340,14 @@ node_templates:
         install_method: none
       server:
         key_name: ''
-        image: { get_input: cloudify_image }
+        image: { get_input: centos_core_image }
         flavor: { get_input: large_image_flavor }
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
           inputs:
             args:
-              image: { get_input: cloudify_image }
+              image: { get_input: centos_core_image }
               flavor: { get_input: large_image_flavor }
               userdata: { get_attribute: [ cloudify_host_cloud_config, cloud_config ] }
     relationships:
@@ -402,7 +360,5 @@ node_templates:
 
 outputs:
 
-  1-Instructions:
-    value: { get_attribute: [ ManagerSetup, final_path ] }
-  2-Demo:
-    value: 'cfy install https://github.com/cloudify-examples/nodecellar-auto-scale-auto-heal-blueprint/archive/4.1.zip -b demo -n openstack-blueprint.yaml'
+  manager_ip:
+    value: { get_input: public_ip }

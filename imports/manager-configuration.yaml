@@ -1,96 +1,59 @@
 imports:
-  - http://cloudify.co/spec/fabric-plugin/1.5/plugin.yaml
-  - http://www.getcloudify.org/spec/utilities-plugin/1.4.2.1/plugin.yaml
+  - http://cloudify.co/spec/fabric-plugin/1.5.1/plugin.yaml
+  - http://www.getcloudify.org/spec/utilities-plugin/1.5.0/plugin.yaml
 
 inputs:
 
-  bootstrap:
+  password:
     description: >
-      If you are not using a pre-baked image, this is true.
-    type: boolean
-    default: False
+      Your manager password. If you do not provide one will be randomly generated, but it will not be displayed at the end.
 
-  cli_package_url:
+  rpm:
     description: >
       If inputs.bootstrap is false, this is the CLI RPM to install and bootstrap with.
-    default: http://repository.cloudifysource.org/cloudify/4.2.0/ga-release/cloudify-cli-4.2ga.rpm
+    default: http://cloudify-release-eu.s3.amazonaws.com/cloudify/4.3.0/ga-release/cloudify-manager-install-4.3.0-ga.x86_64.rpm
 
-  create_secrets:
-    description: >
-      Whether to create the suggested secrets on the manager.
-    default: true
-
-  upload_plugins:
-    description: >
-      Whether to upload plugins to the manager.
-    default: true
-
-  plugin_urls:
-    description: >
-      Plugins used in AWS blueprint examples.
+  blueprints:
     default:
-    - http://repository.cloudifysource.org/cloudify/wagons/cloudify-fabric-plugin/1.5/cloudify_fabric_plugin-1.5-py27-none-linux_x86_64-centos-Core.wgn
-    - http://repository.cloudifysource.org/cloudify/wagons/cloudify-diamond-plugin/1.3.5/cloudify_diamond_plugin-1.3.5-py27-none-linux_x86_64-centos-Core.wgn
-    - http://repository.cloudifysource.org/cloudify/wagons/cloudify-diamond-plugin/1.3.5/cloudify_diamond_plugin-1.3.5-py27-none-linux_x86_64-Ubuntu-trusty.wgn
-    - https://github.com/cloudify-incubator/cloudify-kubernetes-plugin/releases/download/2.0.0/cloudify_kubernetes_plugin-2.0.0-py27-none-linux_x86_64-centos-Core.wgn
-    - http://repository.cloudifysource.org/cloudify/wagons/cloudify-utilities-plugin/1.4.2.1/cloudify_utilities_plugin-1.4.2.1-py27-none-linux_x86_64-centos-Core.wgn
-    - https://s3-eu-west-1.amazonaws.com/cloudify-release-eu/cloudify/wagons/cloudify-openstack-plugin/2.3.0/cloudify_openstack_plugin-2.3.0-py27-none-linux_x86_64-centos-Core.wgn
-    - https://github.com/cloudify-cosmo/cloudify-openstack-plugin/releases/download/2.5.0/cloudify_openstack_plugin-2.5.0-py27-none-linux_x86_64-centos-Core.wgn
-    - https://github.com/cloudify-cosmo/cloudify-aws-plugin/releases/download/1.5.1.2/cloudify_aws_plugin-1.5.1.2-py27-none-linux_x86_64-centos-Core.wgn
-    - http://repository.cloudifysource.org/cloudify/wagons/cloudify-awssdk-plugin/1.2.0.1/cloudify_awssdk_plugin-1.2.0.1-py27-none-linux_x86_64-centos-Core.wgn
-    - https://github.com/cloudify-incubator/cloudify-azure-plugin/releases/download/1.4.3/cloudify_azure_plugin-1.4.3-py27-none-linux_x86_64-centos-Core.wgn
-    - http://repository.cloudifysource.org/cloudify/wagons/cloudify-gcp-plugin/1.3.0.1/cloudify_gcp_plugin-1.3.0.1-py27-none-linux_x86_64-centos-Core.wgn
+    - file: update-blueprint.yaml
+      name: aws-example-network
+      url: https://github.com/cloudify-examples/aws-example-network/archive/4.3.zip
+    - file: simple-blueprint.yaml
+      name: openstack-example-network
+      url: https://github.com/cloudify-examples/openstack-example-network/archive/4.3.zip
+    - file: simple-blueprint.yaml
+      name: azure-example-network
+      url: https://github.com/cloudify-examples/azure-example-network/archive/4.3.zip
+    - file: simple-blueprint.yaml
+      name: gcp-example-network
+      url: https://github.com/cloudify-examples/gcp-example-network/archive/4.3.zip
 
 node_types:
 
   cloudify.nodes.Manager.EnvironmentSetup:
     derived_from: cloudify.nodes.Root
-    properties:
-      bootstrap:
-        default: { get_input: bootstrap }
-      create_secrets:
-        default: { get_input: create_secrets }
-      upload_plugins:
-        default: { get_input: upload_plugins }
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
           implementation: fabric.fabric_plugin.tasks.run_task
           inputs:
             tasks_file:
-              default: scripts/manager/create.py
+              default: scripts/manager/tasks.py
             task_name:
               default: create
             task_properties:
-              default: { get_input: create_inputs }
+              default:
+                private_ip: { get_input: private_ip }
+                public_ip: { get_input: public_ip }
+                rpm: { get_input: rpm }
+                secrets: { get_input: secrets }
+                blueprints: { get_input: blueprints }
+                password: { get_input: password }
             fabric_env:
               default:
-                host_string: { get_input: manager_ip }
+                host_string: { get_input: public_ip }
                 user: { get_input: cloudify_image_username }
                 key_filename: { get_input: cloudify_key_file  }
-        configure:
-          implementation: scripts/manager/configure.py
-          executor: central_deployment_agent
-          inputs:
-            manager_ip:
-              default: { get_input: manager_ip }
-            plugin_urls:
-              default: { get_input: plugin_urls }
-            secrets:
-              default: { get_input: secrets }
-        start:
-          implementation: scripts/manager/start.py
-          executor: central_deployment_agent
-          inputs:
-            manager_ip:
-              default: { get_input: manager_ip }
-            plugin_urls:
-              default: { get_input: plugin_urls }
-            secrets:
-              default: { get_input: secrets }
-        delete:
-          implementation: scripts/manager/delete.py
-          executor: central_deployment_agent
 
 node_templates:
 

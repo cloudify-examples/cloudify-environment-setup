@@ -2,7 +2,7 @@ tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
   - http://www.getcloudify.org/spec/cloudify/4.2/types.yaml
-  - http://www.getcloudify.org/spec/azure-plugin/1.4.3/plugin.yaml
+  - http://www.getcloudify.org/spec/azure-plugin/1.5.1.1/plugin.yaml
   - imports/manager-configuration.yaml
 
 inputs:
@@ -32,14 +32,7 @@ inputs:
     default: 0
 
   cloudify_image_username:
-    default: cfyuser
-
-  cloudify_image:
-    default:
-      publisher: { get_input: centos_core_image_publisher }
-      offer: { get_input: centos_core_image_offer }
-      sku: { get_input: centos_core_image_sku }
-      version: { get_input: centos_core_image_version }
+    default: centos
 
   local_ssh_directory:
     default: '~/.ssh/'
@@ -60,7 +53,7 @@ inputs:
     default: CentOS
 
   centos_core_image_sku:
-    default: '7.3'
+    default: '7-CI'
 
   centos_core_image_version:
     default: latest
@@ -83,7 +76,12 @@ inputs:
   small_image_size:
     default: Standard_A0
 
-  manager_ip:
+  private_ip:
+    description: >
+      Resolving the IP for manager setup.
+    default: { get_attribute: [ cloudify_host, ip ] }
+
+  public_ip:
     description: >
       Resolving the IP for manager setup.
     default: { get_attribute: [ cloudify_host, public_ip ] }
@@ -101,6 +99,16 @@ inputs:
     - key: client_secret
       value: { get_input: client_secret }
     - key: location
+      value: { get_input: location }
+    - key: azure_subscription_id
+      value: { get_input: subscription_id }
+    - key: azure_tenant_id
+      value: { get_input: tenant_id }
+    - key: azure_client_id
+      value: { get_input: client_id }
+    - key: azure_client_secret
+      value: { get_input: client_secret }
+    - key: azure_location
       value: { get_input: location }
     - key: mgr_resource_group_name
       value: { get_attribute: [ resource_group, name ] }
@@ -132,19 +140,6 @@ inputs:
       value: { get_attribute: [ agent_key, public_key_export ] }
     - key: agent_key_private
       value: { get_attribute: [ agent_key, private_key_export ] }
-
-  create_inputs:
-    default:
-      local_private_key: { get_input: cloudify_key_file  }
-      rpm_package: { get_input: cli_package_url }
-      public_ip: { get_input: manager_ip }
-      private_ip: { get_attribute: [ cloudify_host, ip ] }
-      ssh_user: { get_input: cloudify_image_username }
-      ssh_key_filename:
-        concat:
-        - '/home/'
-        - { get_input: cloudify_image_username }
-        - '/.ssh/key.pem'
 
 dsl_definitions:
 
@@ -365,9 +360,31 @@ node_templates:
       location: { get_input: location }
       os_family: linux
       resource_config:
-        hardwareProfile: {}
-        storageProfile: {}
-        osProfile: {}
+        hardwareProfile:
+          vmSize: { get_input: large_image_size }
+        storageProfile:
+          imageReference:
+            publisher: { get_input: centos_core_image_publisher }
+            offer: { get_input: centos_core_image_offer }
+            sku: { get_input: centos_core_image_sku }
+            version: { get_input: centos_core_image_version }
+        osProfile:
+          customData:
+            concat:
+            - |
+              $!/bin/bash
+            - { concat: [ 'usermod -aG wheel', { get_input: cloudify_image_username } ] }
+            - |
+              yum install -y python-backports-ssl_match_hostname python-setuptools python-backports
+          computerName: { get_property: [SELF, name] }
+          adminUsername: { get_input: cloudify_image_username }
+          adminPassword: ''
+          linuxConfiguration:
+            ssh:
+              publicKeys:
+              - keydata: { get_attribute: [ manager_key, public_key_export ] }
+                path: { concat: [ '/home/', { get_input: cloudify_image_username }, '/.ssh/authorized_keys' ] }
+            disablePasswordAuthentication: true
       agent_config:
         install_method: none
     interfaces:
@@ -375,21 +392,7 @@ node_templates:
         create:
           implementation: pkg.cloudify_azure.resources.compute.virtualmachine.create
           inputs:
-            args:
-              hardwareProfile:
-                vmSize: { get_input: large_image_size }
-              storageProfile:
-                imageReference: { get_input: cloudify_image }
-              osProfile:
-                computerName: { get_property: [SELF, name] }
-                adminUsername: { get_input: cloudify_image_username }
-                adminPassword: ''
-                linuxConfiguration:
-                  ssh:
-                    publicKeys:
-                    - keydata: { get_attribute: [ manager_key, public_key_export ] }
-                      path: { concat: [ '/home/', { get_input: cloudify_image_username }, '/.ssh/authorized_keys' ] }
-                  disablePasswordAuthentication: true
+            args: { get_property: [ SELF, resource_config ] }
     relationships:
       - type: cloudify.azure.relationships.contained_in_resource_group
         target: resource_group
@@ -400,30 +403,7 @@ node_templates:
       - type: cloudify.azure.relationships.connected_to_nic
         target: subnet1_nic
 
-  cloudify_host_yum:
-    type: cloudify.azure.nodes.compute.VirtualMachineExtension
-    properties:
-      location: { get_input: location }
-      retry_after: { get_input: retry_after }
-      azure_config: *client_config
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        create:
-          inputs:
-            resource_config:
-              publisher: Microsoft.Azure.Extensions
-              type: CustomScript
-              typeHandlerVersion: '2.0'
-              autoUpgradeMinorVersion: true
-              settings:
-                commandToExecute: yum install -y python-backports-ssl_match_hostname python-setuptools python-backports
-    relationships:
-    - type: cloudify.azure.relationships.vmx_contained_in_vm
-      target: cloudify_host
-
 outputs:
 
-  1-Instructions:
-    value: { get_attribute: [ ManagerSetup, final_path ] }
-  2-Demo:
-    value: 'cfy install https://github.com/cloudify-examples/nodecellar-auto-scale-auto-heal-blueprint/archive/4.1.zip -b demo -n azure-blueprint.yaml'
+  manager_ip:
+    value: { get_input: public_ip }
