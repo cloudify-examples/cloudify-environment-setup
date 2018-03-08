@@ -4,6 +4,7 @@ imports:
   - http://www.getcloudify.org/spec/cloudify/4.3/types.yaml
   - http://www.getcloudify.org/spec/azure-plugin/1.5.1.1/plugin.yaml
   - http://www.getcloudify.org/spec/utilities-plugin/1.5.0.1/plugin.yaml
+  - http://www.getcloudify.org/spec/fabric-plugin/1.5.1/plugin.yaml
   - imports/manager-configuration.yaml
 
 inputs:

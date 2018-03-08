@@ -1,7 +1,3 @@
-imports:
-  - http://cloudify.co/spec/fabric-plugin/1.5.1/plugin.yaml
-  - http://www.getcloudify.org/spec/utilities-plugin/1.5.0/plugin.yaml
-
 inputs:
 
   password:

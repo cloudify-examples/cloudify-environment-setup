@@ -52,7 +52,9 @@ def cfy_install(password, old=False):
     install_string = 'cfy_manager install'
 
     if password:
-        install_string = install_string + ' ' + '-a {0}'.format(password)
+        install_string = \
+            install_string + ' ' + '--admin-password {0}'.format(
+                password)
     if old:
         install_string = install_string + '  --clean-db'
     elif not old: 
