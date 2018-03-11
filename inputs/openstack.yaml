@@ -8,3 +8,4 @@ centos_core_image: c76d5b15-bf64-4402-bea6-9f4957ac0c6d
 ubuntu_trusty_image: e41430f7-9131-495b-927f-e7dc4b8994c8
 small_image_flavor: 2
 large_image_flavor: 4
+password: admin

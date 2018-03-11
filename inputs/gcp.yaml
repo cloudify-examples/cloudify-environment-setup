@@ -5,4 +5,4 @@ private_key_id: "...."
 private_key: "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANsdfsdfdssdfzoBpqZ4yAzRCKT/68bpM=\n-----END PRIVATE KEY-----"
 region: 'europe-west1'
 zone: 'europe-west1-b'
-
+password: admin

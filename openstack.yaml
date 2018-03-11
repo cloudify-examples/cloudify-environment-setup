@@ -263,14 +263,6 @@ node_templates:
         port_range_max: 8101
         protocol: tcp
       - remote_ip_prefix: 0.0.0.0/0
-        port_range_min: 53333
-        port_range_max: 53333
-        protocol: tcp
-      - remote_ip_prefix: 0.0.0.0/0
-        port_range_min: 53229
-        port_range_max: 53229
-        protocol: tcp
-      - remote_ip_prefix: 0.0.0.0/0
         port_range_min: 8300
         port_range_max: 8301
         protocol: tcp
@@ -279,12 +271,24 @@ node_templates:
         port_range_max: 8500
         protocol: tcp
       - remote_ip_prefix: 0.0.0.0/0
+        port_range_min: 15432
+        port_range_max: 15432
+        protocol: tcp
+      - remote_ip_prefix: 0.0.0.0/0
         port_range_min: 22000
         port_range_max: 22000
         protocol: tcp
       - remote_ip_prefix: 0.0.0.0/0
-        port_range_min: 15432
-        port_range_max: 15432
+        port_range_min: 53229
+        port_range_max: 53229
+        protocol: tcp
+      - remote_ip_prefix: 0.0.0.0/0
+        port_range_min: 53333
+        port_range_max: 53333
+        protocol: tcp
+      - remote_ip_prefix: 0.0.0.0/0
+        port_range_min: 30000
+        port_range_max: 40000
         protocol: tcp
 
   public_network_subnet_port:
