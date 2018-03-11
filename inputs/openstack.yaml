@@ -1,5 +1,5 @@
 username: -cut-
-password: -cut-
+keystone_password: -cut-
 tenant_name: -cut-
 auth_url: https://-cut-:5000/v2.0
 region: RegionOne
