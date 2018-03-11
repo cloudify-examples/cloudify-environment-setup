@@ -335,8 +335,12 @@ node_templates:
               - { concat: [ 'usermod -aG wheel ', { get_input: cloudify_image_username } ] }
               - yum install -y python-backports-ssl_match_hostname python-setuptools python-backports
     relationships:
-      - type: cloudify.relationships.depends_on
-        target: manager_key
+    - type: cloudify.relationships.depends_on
+      target: manager_key
+    - type: cloudify.relationships.depends_on
+      target: public_network_subnet_port
+    - type: cloudify.relationships.depends_on
+      target: private_network_subnet_port
 
   cloudify_host:
     type: cloudify.openstack.nodes.Server
@@ -356,11 +360,11 @@ node_templates:
               image: { get_input: centos_core_image }
               flavor: { get_input: large_image_flavor }
               userdata: { get_attribute: [ cloudify_host_cloud_config, cloud_config ] }
+              nics:
+              - port-id: { get_attribute: [ public_network_subnet_port, external_id ] }
+              - port-id: { get_attribute: [ private_network_subnet_port, external_id ] }
     relationships:
-    - type: cloudify.openstack.server_connected_to_port
-      target: public_network_subnet_port
-    - type: cloudify.openstack.server_connected_to_port
-      target: private_network_subnet_port
+    # Implicitly dependent on ports.
     - type: cloudify.relationships.depends_on
       target: cloudify_host_cloud_config
 
