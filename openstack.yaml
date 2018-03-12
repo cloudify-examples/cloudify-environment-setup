@@ -362,7 +362,7 @@ node_templates:
               userdata: { get_attribute: [ cloudify_host_cloud_config, cloud_config ] }
               nics:
               - port-id: { get_attribute: [ public_network_subnet_port, external_id ] }
-              - port-id: { get_attribute: [ private_network_subnet_port, external_id ] }
+              # - port-id: { get_attribute: [ private_network_subnet_port, external_id ] }
     relationships:
     # Implicitly dependent on ports.
     - type: cloudify.relationships.depends_on
