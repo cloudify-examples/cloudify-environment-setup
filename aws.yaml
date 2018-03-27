@@ -2,7 +2,7 @@ tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
   - http://www.getcloudify.org/spec/cloudify/4.3/types.yaml
-  - http://www.getcloudify.org/spec/awssdk-plugin/2.0.0/plugin.yaml
+  - http://www.getcloudify.org/spec/awssdk-plugin/2.1.0/plugin.yaml
   - http://www.getcloudify.org/spec/utilities-plugin/1.5.0.1/plugin.yaml
   - http://www.getcloudify.org/spec/fabric-plugin/1.5.1/plugin.yaml
   - imports/manager-configuration.yaml
@@ -422,6 +422,21 @@ node_templates:
           inputs:
             resource_config: { get_property: [ SELF, resource_config, kwargs] }
 
+  cloudify_host_volume:
+    type: cloudify.nodes.aws.ec2.EBSVolume
+    properties:
+      resource_config:
+        kwargs:
+          AvailabilityZone: { get_input: availability_zone }
+          Size: 16
+          VolumeType: gp2
+          TagSpecifications:
+          - ResourceType: volume
+            Tags:
+            - Key: Name
+              Value: Cloudify Volume
+      client_config: *client_config
+
   cloudify_host:
     type: cloudify.nodes.aws.ec2.Instances
     properties:
@@ -453,6 +468,26 @@ node_templates:
         configure:
           inputs:
             resource_config: { get_property: [ SELF, resource_config, kwargs] }
+
+  cloudify_host_volume_attachment:
+    type: cloudify.nodes.aws.ec2.EBSAttachment
+    properties:
+      resource_config:
+        kwargs:
+          Device: /dev/sdh
+          InstanceId: { get_attribute: [ cloudify_host, aws_resource_id ] }
+          VolumeId: { get_attribute: [ cloudify_host_volume, aws_resource_id ] }
+      client_config: *client_config
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        configure:
+          inputs:
+            resource_config: { get_property: [ SELF, resource_config, kwargs] }
+    relationships:
+    - type: cloudify.relationships.depends_on
+      target: cloudify_host_volume
+    - type: cloudify.relationships.depends_on
+      target: cloudify_host
 
 outputs:
 
