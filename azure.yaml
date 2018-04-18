@@ -2,7 +2,7 @@ tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
   - http://www.getcloudify.org/spec/cloudify/4.3/types.yaml
-  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-azure-plugin/private_cloud/plugin.yaml
+  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-azure-plugin/1.6.0/plugin.yaml
   - http://www.getcloudify.org/spec/utilities-plugin/1.5.2/plugin.yaml
   - http://www.getcloudify.org/spec/fabric-plugin/1.5.1/plugin.yaml
   - imports/manager-configuration.yaml
