@@ -424,6 +424,7 @@ node_templates:
             disablePasswordAuthentication: true
       agent_config:
         install_method: none
+      storage_endpoint: { get_input: endpoint_storage }
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
