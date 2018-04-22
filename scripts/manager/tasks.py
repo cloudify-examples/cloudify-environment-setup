@@ -13,6 +13,14 @@ def install_rpm(_rpm):
         raise NonRecoverableError(str(e))
     return True
 
+def install_requirements():
+    try:
+        sudo("sudo yum install -y python-backports-ssl_match_hostname "
+             "python-setuptools python-backports")
+    except Exception as e:
+        raise NonRecoverableError(str(e))
+    return True
+
 
 def update_config(private, public, _config_path):
 
@@ -57,7 +65,7 @@ def cfy_install(password, old=False):
                 password)
     if old:
         install_string = install_string + '  --clean-db'
-    elif not old: 
+    elif not old:
         try:
             sudo("sudo yum install -y openssl-1.0.2k")
         except Exception as e:
@@ -120,8 +128,9 @@ def create(private_ip,
         run("echo Hello")
     except Exception as e:
         raise RecoverableError(str(e))
-    
+
     if not ctx.instance.runtime_properties.get('installed_rpm'):
+        install_requirements()
         ctx.instance.runtime_properties['installed_rpm'] = install_rpm(rpm)
 
     if not ctx.instance.runtime_properties.get('updated_config'):
