@@ -68,7 +68,7 @@ inputs:
     default: centos
 
   centos_core_image:
-    default: { get_input: cloudify_image }
+    default: 70de1e0f-2951-4eae-9a8f-05afd97cd036
 
   ubuntu_trusty_image:
     type: string
