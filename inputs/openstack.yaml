@@ -4,7 +4,7 @@ tenant_name: -cut-
 auth_url: https://-cut-:5000/v2.0
 region: RegionOne
 external_network_name: GATEWAY_NET
-centos_core_image: c76d5b15-bf64-4402-bea6-9f4957ac0c6d
+centos_core_image: 70de1e0f-2951-4eae-9a8f-05afd97cd036
 ubuntu_trusty_image: e41430f7-9131-495b-927f-e7dc4b8994c8
 small_image_flavor: 2
 large_image_flavor: 4
