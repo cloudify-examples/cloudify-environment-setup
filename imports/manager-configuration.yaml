@@ -7,7 +7,7 @@ inputs:
   rpm:
     description: >
       If inputs.bootstrap is false, this is the CLI RPM to install and bootstrap with.
-    default: http://repository.cloudifysource.org/cloudify/4.3.1/ga-release/cloudify-manager-install-4.3.1ga.rpm
+    default: http://repository.cloudifysource.org/cloudify/4.3.2/ga-release/cloudify-manager-install-4.3.2ga.rpm
 
   blueprints:
     default:
