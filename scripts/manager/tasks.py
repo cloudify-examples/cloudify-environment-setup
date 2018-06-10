@@ -1,5 +1,6 @@
+from __future__ import with_statement
 from tempfile import NamedTemporaryFile
-from fabric.api import get, sudo, run
+from fabric.api import get, sudo, run, hide, settings
 from cloudify import ctx
 from cloudify.exceptions import NonRecoverableError, RecoverableError
 
@@ -95,8 +96,9 @@ def plugins_upload():
 def secrets_create(secret_key, secret_value):
 
     try:
-        run("cfy secrets create {0} -s \"{1}\"".format(
-            secret_key, secret_value))
+        with hide('output','running','warnings'), settings(warn_only=True):
+            run("cfy secrets create {0} -s \"{1}\"".format(
+                secret_key, secret_value))
     except Exception as e:
         raise NonRecoverableError(str(e))
 
