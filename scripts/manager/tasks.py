@@ -1,4 +1,5 @@
 from __future__ import with_statement
+import os
 from tempfile import NamedTemporaryFile
 from fabric.api import get, sudo, run, hide, settings
 from cloudify import ctx
@@ -12,6 +13,8 @@ def install_rpm(_rpm):
         sudo("rpm -i {0}".format(_rpm))
     except Exception as e:
         raise NonRecoverableError(str(e))
+    if not os.path.exists(CONFIG_PATH):
+        raise RecoverableError('Failed to install RPM.')
     return True
 
 def install_requirements():
