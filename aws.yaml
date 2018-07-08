@@ -462,7 +462,9 @@ node_templates:
       - type: cloudify.relationships.depends_on
         target: nic
       - type: cloudify.relationships.depends_on
-        target: centos_core_ami              
+        target: centos_core_ami
+      - type: cloudify.relationships.depends_on
+        target: nat_gateway
     interfaces:
       cloudify.interfaces.lifecycle:
         configure:
