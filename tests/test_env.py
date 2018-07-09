@@ -1,8 +1,10 @@
 # Built-in Imports
 import os
+import sys
 
 # Cloudify Imports
 from ecosystem_tests import (
+    PasswordFilter,
     EcosystemTestBase,
     utils as eco_utils)
 
@@ -10,8 +12,26 @@ from ecosystem_tests import (
 class TestAWS(EcosystemTestBase):
 
     def setUp(self):
+        if self.password not in self.sensitive_data:
+            self.sensitive_data.append(self.password)
+        sys.stdout = PasswordFilter(self.sensitive_data, sys.stdout)
+        sys.stderr = PasswordFilter(self.sensitive_data, sys.stderr)
+        self.cfy_local = self.setup_cfy_local()
         os.environ['AWS_DEFAULT_REGION'] = self.inputs.get('ec2_region_name')
-        super(TestAWS, self).setUp()
+        if 'ECOSYSTEM_SESSION_MANAGER_IP' in os.environ:
+            self.manager_ip = \
+                os.environ['ECOSYSTEM_SESSION_MANAGER_IP']
+        else:
+            self.install_manager()
+            self.initialize_manager_profile()
+
+    @property
+    def node_type_prefix(self):
+        return 'cloudify.nodes.aws'
+
+    @property
+    def plugin_mapping(self):
+        return 'awssdk'
 
     @property
     def blueprint_file_name(self):
@@ -74,17 +94,18 @@ class TestAWS(EcosystemTestBase):
 
     def test_secrets(self):
         for secret in self.secrets_to_check:
-            self.assertNotNone(eco_utils.get_secrets(secret))
+            self.assertIsNotNone(eco_utils.get_secrets(secret))
 
     def test_blueprints(self):
         for blueprint in self.blueprints_to_check:
-            self.assertEqual(
-                0,
+            try:
                 eco_utils.get_client_response(
                     'blueprints',
                     'get',
                     {'blueprint_id': blueprint})
-                )
+            except:
+                self.fail(
+                    'Blueprint {0} does not exist'.format(blueprint))
 
     def test_network_deployment(self):
         self.addCleanup(self.cleanup_deployment, 'aws-example-network')
@@ -103,7 +124,25 @@ class TestAWS(EcosystemTestBase):
 class TestAzure(EcosystemTestBase):
 
     def setUp(self):
-        super(TestAzure, self).setUp()
+        if self.password not in self.sensitive_data:
+            self.sensitive_data.append(self.password)
+        sys.stdout = PasswordFilter(self.sensitive_data, sys.stdout)
+        sys.stderr = PasswordFilter(self.sensitive_data, sys.stderr)
+        self.cfy_local = self.setup_cfy_local()
+        if 'ECOSYSTEM_SESSION_MANAGER_IP' in os.environ:
+            self.manager_ip = \
+                os.environ['ECOSYSTEM_SESSION_MANAGER_IP']
+        else:
+            self.install_manager()
+            self.initialize_manager_profile()
+
+    @property
+    def node_type_prefix(self):
+        return 'cloudify.azure.nodes'
+
+    @property
+    def plugin_mapping(self):
+        return 'pkg'
 
     @property
     def blueprint_file_name(self):
@@ -111,11 +150,11 @@ class TestAzure(EcosystemTestBase):
 
     @property
     def external_id_key(self):
-        return 'name'
+        return 'public_ip'
 
     @property
     def server_ip_property(self):
-        return 'ip'
+        return 'cloudify_host'
 
     @property
     def sensitive_data(self):
@@ -132,7 +171,7 @@ class TestAzure(EcosystemTestBase):
             return {
                 'password': self.password,
                 'location': 'westus',
-                'resource_prefix': 'trammell',
+                'resource_prefix': 'ecotest',
                 'resource_suffix': self.application_prefix,
                 'subscription_id': os.environ['AZURE_SUB_ID'],
                 'tenant_id': os.environ['AZURE_TEN_ID'],
@@ -190,7 +229,13 @@ class TestAzure(EcosystemTestBase):
     def test_network_deployment(self):
         self.addCleanup(self.cleanup_deployment, 'azure-example-network')
         # Create Deployment (Blueprint already uploaded.)
-        if eco_utils.create_deployment('azure-example-network'):
+        _inputs = {
+            'resource_prefix': 'ecotestnet',
+            'resource_suffix': self.application_prefix
+        }
+        if eco_utils.create_deployment(
+                'azure-example-network',
+                inputs=_inputs):
             raise Exception(
                 'Deployment azure-example-network failed.')
         # Install Deployment.
@@ -202,23 +247,42 @@ class TestAzure(EcosystemTestBase):
 
     def test_blueprints(self):
         for blueprint in self.blueprints_to_check:
-            self.assertEqual(
-                0,
+            try:
                 eco_utils.get_client_response(
                     'blueprints',
                     'get',
                     {'blueprint_id': blueprint})
-                )
+            except:
+                self.fail(
+                    'Blueprint {0} does not exist'.format(blueprint))
 
     def test_secrets(self):
         for secret in self.secrets_to_check:
-            self.assertNotNone(eco_utils.get_secrets(secret))
+            self.assertIsNotNone(eco_utils.get_secrets(secret))
 
 
 class TestGCP(EcosystemTestBase):
 
     def setUp(self):
-        super(TestGCP, self).setUp()
+        if self.password not in self.sensitive_data:
+            self.sensitive_data.append(self.password)
+        sys.stdout = PasswordFilter(self.sensitive_data, sys.stdout)
+        sys.stderr = PasswordFilter(self.sensitive_data, sys.stderr)
+        self.cfy_local = self.setup_cfy_local()
+        if 'ECOSYSTEM_SESSION_MANAGER_IP' in os.environ:
+            self.manager_ip = \
+                os.environ['ECOSYSTEM_SESSION_MANAGER_IP']
+        else:
+            self.install_manager()
+            self.initialize_manager_profile()
+
+    @property
+    def node_type_prefix(self):
+        return 'cloudify.gcp.nodes'
+
+    @property
+    def plugin_mapping(self):
+        return 'gcp_plugin'
 
     @property
     def blueprint_file_name(self):
@@ -226,11 +290,11 @@ class TestGCP(EcosystemTestBase):
 
     @property
     def external_id_key(self):
-        return 'name'
+        return 'natIP'
 
     @property
     def server_ip_property(self):
-        return 'ip'
+        return 'cloudify_host'
 
     @property
     def sensitive_data(self):
@@ -240,7 +304,7 @@ class TestGCP(EcosystemTestBase):
             os.environ['GCP_CLIENT_ID'],
             os.environ['GCP_PRIVATE_PROJECT_ID'],
             os.environ['GCP_PRIVATE_KEY_ID'],
-            os.environ['GCP_PRIVATE_KEY']
+            os.environ['GCP_PRIVATE_KEY'].decode('string_escape')
         ]
 
     @property
@@ -256,7 +320,8 @@ class TestGCP(EcosystemTestBase):
                 'client_id': os.environ['GCP_CLIENT_ID'],
                 'project_id': os.environ['GCP_PRIVATE_PROJECT_ID'],
                 'private_key_id': os.environ['GCP_PRIVATE_KEY_ID'],
-                'private_key': os.environ['GCP_PRIVATE_KEY'],
+                'private_key':
+                    os.environ['GCP_PRIVATE_KEY'].decode('string_escape'),
             }
         except KeyError:
             raise
@@ -299,24 +364,39 @@ class TestGCP(EcosystemTestBase):
             'client_x509_cert_url'
         ]
 
+    def get_manager_ip(self):
+        for instance in self.node_instances:
+            if instance.node_id == self.server_ip_property:
+                props = instance.runtime_properties
+                nic = props['networkInterfaces'][0]
+                return nic['accessConfigs'][0][self.external_id_key]
+        raise Exception('No manager IP found.')
+
     def test_blueprints(self):
         for blueprint in self.blueprints_to_check:
-            self.assertEqual(
-                0,
+            try:
                 eco_utils.get_client_response(
                     'blueprints',
                     'get',
                     {'blueprint_id': blueprint})
-                )
+            except:
+                self.fail(
+                    'Blueprint {0} does not exist'.format(blueprint))
 
     def test_secrets(self):
         for secret in self.secrets_to_check:
-            self.assertNotNone(eco_utils.get_secrets(secret))
+            self.assertIsNotNone(eco_utils.get_secrets(secret))
 
     def test_network_deployment(self):
+        _inputs = {
+            'resource_prefix': 'ecotestnet',
+            'resource_suffix': self.application_prefix
+        }
         self.addCleanup(self.cleanup_deployment, 'gcp-example-network')
         # Create Deployment (Blueprint already uploaded.)
-        if eco_utils.create_deployment('gcp-example-network'):
+        if eco_utils.create_deployment(
+                'gcp-example-network',
+                inputs=_inputs):
             raise Exception(
                 'Deployment gcp-example-network failed.')
         # Install Deployment.
