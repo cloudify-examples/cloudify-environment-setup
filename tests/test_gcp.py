@@ -1,7 +1,16 @@
+import os
+
 from . import EnvironmentSetupTestBase, eco_utils
 
 
 class GCPTestBase(EnvironmentSetupTestBase):
+
+    @classmethod
+    def tearDownClass(cls):
+        eco_utils.execute_command(
+            'cfy profiles delete {0}'.format(
+                os.environ['ECOSYSTEM_SESSION_MANAGER_IP']))
+        super(GCPTestBase, cls).tearDownClass()
 
     @property
     def node_type_prefix(self):
@@ -22,17 +31,6 @@ class GCPTestBase(EnvironmentSetupTestBase):
     @property
     def server_ip_property(self):
         return 'cloudify_host'
-
-    @property
-    def sensitive_data(self):
-        return [
-            os.environ['GCP_CERT_URL'],
-            os.environ['GCP_EMAIL'],
-            os.environ['GCP_CLIENT_ID'],
-            os.environ['GCP_PRIVATE_PROJECT_ID'],
-            os.environ['GCP_PRIVATE_KEY_ID'],
-            os.environ['GCP_PRIVATE_KEY'].decode('string_escape')
-        ]
 
     @property
     def inputs(self):
@@ -97,6 +95,9 @@ class GCPTestBase(EnvironmentSetupTestBase):
             'resource_suffix': self.application_prefix
         }
         self.addCleanup(self.cleanup_deployment, 'gcp-example-network')
+        # eco_utils.execute_command(
+        #     'cfy secrets update gcp_private_key -s {0}'.format(
+        #         os.environ['GCP_PRIVATE_KEY']))
         # Create Deployment (Blueprint already uploaded.)
         if eco_utils.create_deployment(
                 'gcp-example-network',
@@ -113,3 +114,12 @@ class GCPTestBase(EnvironmentSetupTestBase):
 
 class TestGCP432(GCPTestBase):
     pass
+
+
+class TestGCP1853(GCPTestBase):
+
+    @property
+    def cloudify_rpm_url(self):
+        return 'http://repository.cloudifysource.org/cloudify/' \
+               '18.5.3/community-release/' \
+               'cloudify-manager-install-community-18.5.3.rpm'

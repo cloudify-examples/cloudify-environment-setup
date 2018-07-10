@@ -1,3 +1,5 @@
+import os
+
 from . import EnvironmentSetupTestBase, eco_utils
 
 
@@ -22,15 +24,6 @@ class AzureTestBase(EnvironmentSetupTestBase):
     @property
     def server_ip_property(self):
         return 'cloudify_host'
-
-    @property
-    def sensitive_data(self):
-        return [
-            os.environ['AZURE_SUB_ID'],
-            os.environ['AZURE_TEN_ID'],
-            os.environ['AZURE_CLI_ID'],
-            os.environ['AZURE_CLI_SE']
-        ]
 
     @property
     def inputs(self):
@@ -106,3 +99,11 @@ class AzureTestBase(EnvironmentSetupTestBase):
 
 class TestAzure432(AzureTestBase):
     pass
+
+class TestAzure1853(AzureTestBase):
+
+    @property
+    def cloudify_rpm_url(self):
+        return 'http://repository.cloudifysource.org/cloudify/' \
+               '18.5.3/community-release/' \
+               'cloudify-manager-install-community-18.5.3.rpm'
