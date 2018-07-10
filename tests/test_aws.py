@@ -1,3 +1,5 @@
+import os
+
 from . import EnvironmentSetupTestBase, eco_utils
 
 
@@ -6,7 +8,7 @@ class AWSTestbase(EnvironmentSetupTestBase):
     def setUp(self):
         os.environ['AWS_DEFAULT_REGION'] = \
             self.inputs.get('ec2_region_name')
-        super(TestAWS432, self).setUp()
+        super(AWSTestbase, self).setUp()
 
     @property
     def node_type_prefix(self):
@@ -27,13 +29,6 @@ class AWSTestbase(EnvironmentSetupTestBase):
     @property
     def server_ip_property(self):
         return 'ip'
-
-    @property
-    def sensitive_data(self):
-        return [
-            os.environ['AWS_SECRET_ACCESS_KEY'],
-            os.environ['AWS_ACCESS_KEY_ID']
-        ]
 
     @property
     def inputs(self):
@@ -82,3 +77,11 @@ class AWSTestbase(EnvironmentSetupTestBase):
 
 class TestAWS432(AWSTestbase):
     pass
+
+class TestAWS1853(AWSTestbase):
+
+    @property
+    def cloudify_rpm_url(self):
+        return 'http://repository.cloudifysource.org/cloudify/' \
+               '18.5.3/community-release/' \
+               'cloudify-manager-install-community-18.5.3.rpm'

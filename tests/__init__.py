@@ -44,6 +44,44 @@ class EnvironmentSetupTestBase(EcosystemTestBase):
         return 'http://repository.cloudifysource.org/cloudify/' \
                '4.3.2/ga-release/cloudify-manager-install-4.3.2ga.rpm'
 
+    @property
+    def sensitive_data(self):
+
+        # We need to try returning all of these because
+        # we have some common tests in this class.
+
+        try:
+
+            return [
+                os.environ['AWS_SECRET_ACCESS_KEY'],
+                os.environ['AWS_ACCESS_KEY_ID']
+            ]
+        except KeyError:
+            pass
+
+        try:
+            return [
+                os.environ['GCP_CERT_URL'],
+                os.environ['GCP_EMAIL'],
+                os.environ['GCP_CLIENT_ID'],
+                os.environ['GCP_PRIVATE_PROJECT_ID'],
+                os.environ['GCP_PRIVATE_KEY_ID'],
+                os.environ['GCP_PRIVATE_KEY'],
+                os.environ['GCP_PRIVATE_KEY'].decode('string_escape')
+            ]
+        except KeyError:
+            pass
+
+        try:
+            return [
+                os.environ['AZURE_SUB_ID'],
+                os.environ['AZURE_TEN_ID'],
+                os.environ['AZURE_CLI_ID'],
+                os.environ['AZURE_CLI_SE']
+            ]
+        except KeyError:
+            raise
+
     def test_secrets(self):
         for secret in self.secrets_to_check:
             self.assertIsNotNone(eco_utils.get_secrets(secret))
