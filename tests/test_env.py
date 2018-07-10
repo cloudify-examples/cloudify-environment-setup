@@ -26,6 +26,12 @@ class TestAWS(EcosystemTestBase):
             self.initialize_manager_profile()
 
     @property
+    def manager_blueprint_version(self):
+        if 'CIRCLE_SHA1' in os.environ:
+            return os.environ['CIRCLE_SHA1'][0:7]
+        return os.environ.get('MANAGER_BLUEPRINT_VERSION', 'latest')
+
+    @property
     def node_type_prefix(self):
         return 'cloudify.nodes.aws'
 
