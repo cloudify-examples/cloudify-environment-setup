@@ -113,7 +113,12 @@ class GCPTestBase(EnvironmentSetupTestBase):
 
 
 class TestGCP432(GCPTestBase):
-    pass
+
+    @property
+    def cloudify_rpm_url(self):
+        return 'http://repository.cloudifysource.org/cloudify/' \
+               '4.3.2/ga-release/cloudify-manager-install-4.3.2ga.rpm'
+    
 
 
 class TestGCP1853(GCPTestBase):
@@ -123,3 +128,12 @@ class TestGCP1853(GCPTestBase):
         return 'http://repository.cloudifysource.org/cloudify/' \
                '18.5.3/community-release/' \
                'cloudify-manager-install-community-18.5.3.rpm'
+
+
+class TestGCP440(GCPTestBase):
+
+    @property
+    def cloudify_rpm_url(self):
+        return 'http://repository.cloudifysource.org/cloudify/' \
+               '4.4.0/rc2-release/' \
+               'cloudify-manager-install-4.4rc2.rpm'
