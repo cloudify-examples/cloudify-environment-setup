@@ -75,8 +75,10 @@ class AWSTestbase(EnvironmentSetupTestBase):
         if eco_utils.execute_uninstall('aws-example-network'):
             raise Exception('Uninstall aws-example-network failed.')
 
+
 class TestAWS432(AWSTestbase):
     pass
+
 
 class TestAWS1853(AWSTestbase):
 
@@ -85,3 +87,12 @@ class TestAWS1853(AWSTestbase):
         return 'http://repository.cloudifysource.org/cloudify/' \
                '18.5.3/community-release/' \
                'cloudify-manager-install-community-18.5.3.rpm'
+
+
+class TestAWS440(AWSTestbase):
+
+    @property
+    def cloudify_rpm_url(self):
+        return 'http://repository.cloudifysource.org/cloudify/' \
+               '4.4.0/rc2-release/' \
+               'cloudify-manager-install-4.4rc2.rpm'

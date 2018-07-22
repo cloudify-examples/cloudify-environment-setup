@@ -28,6 +28,14 @@ def update_config(private, public, _config_path):
 
     SED = "sed -i 's|{0}|{1}|g' {2}"
 
+    old_sanity = "  skip_sanity: false"
+    new_sanity = "  skip_sanity: true"
+
+    try:
+        sudo(SED.format(old_sanity, new_sanity, _config_path))
+    except Exception as e:
+        raise NonRecoverableError(str(e))
+
     old_private_ip = "  private_ip: \\x27\\x27"
     new_private_ip = "  private_ip: \\x27{0}\\x27".format(private)
 
