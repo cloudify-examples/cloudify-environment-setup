@@ -77,7 +77,12 @@ class AWSTestbase(EnvironmentSetupTestBase):
 
 
 class TestAWS432(AWSTestbase):
-    pass
+
+    @property
+    def cloudify_rpm_url(self):
+        return 'http://repository.cloudifysource.org/cloudify/' \
+               '4.3.2/ga-release/cloudify-manager-install-4.3.2ga.rpm'
+
 
 
 class TestAWS1853(AWSTestbase):
