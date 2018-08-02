@@ -41,9 +41,6 @@ jobs:
           name: install test requirements
           command: pip install nose https://github.com/cloudify-incubator/cloudify-awssdk-plugin/archive/2.3.4.zip https://github.com/cloudify-cosmo/cloudify-fabric-plugin/archive/1.5.1.zip https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.7.1.zip https://github.com/cloudify-incubator/cloudify-ecosystem-test/archive/2.1.1.zip
       - run:
-          name: test 4.3.2
-          command: nosetests -s tests/test_aws.py:TestAWS432
-      - run:
           name: test 4.4.0
           command: nosetests -s tests/test_aws.py:TestAWS440
 
@@ -77,9 +74,6 @@ jobs:
           name: install test requirements
           command: pip install nose https://github.com/cloudify-incubator/cloudify-azure-plugin/archive/1.7.2.zip https://github.com/cloudify-cosmo/cloudify-fabric-plugin/archive/1.5.1.zip https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.7.1.zip https://github.com/cloudify-incubator/cloudify-ecosystem-test/archive/2.1.1.zip
       - run:
-          name: test 4.3.2
-          command: nosetests -s tests/test_azure.py:TestAzure432
-      - run:
           name: test 4.4.0
           command: nosetests -s tests/test_azure.py:TestAzure440
 
@@ -112,9 +106,6 @@ jobs:
       - run:
           name: install test requirements
           command: pip install nose https://github.com/cloudify-cosmo/cloudify-gcp-plugin/archive/1.4.3.zip https://github.com/cloudify-cosmo/cloudify-fabric-plugin/archive/1.5.1.zip https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.7.1.zip https://github.com/cloudify-incubator/cloudify-ecosystem-test/archive/2.1.1.zip
-      - run:
-          name: test 4.3.2
-          command: nosetests -s tests/test_gcp.py:TestGCP432
       - run:
           name: test 4.4.0
           command: nosetests -s tests/test_gcp.py:TestGCP440

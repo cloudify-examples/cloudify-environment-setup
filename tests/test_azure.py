@@ -98,28 +98,9 @@ class AzureTestBase(EnvironmentSetupTestBase):
             raise Exception('Uninstall azure-example-network failed.')
 
 
-class TestAzure432(AzureTestBase):
-
-    @property
-    def cloudify_rpm_url(self):
-        return 'http://repository.cloudifysource.org/cloudify/' \
-               '4.3.2/ga-release/cloudify-manager-install-4.3.2ga.rpm'
-
-
-
-class TestAzure1853(AzureTestBase):
-
-    @property
-    def cloudify_rpm_url(self):
-        return 'http://repository.cloudifysource.org/cloudify/' \
-               '18.5.3/community-release/' \
-               'cloudify-manager-install-community-18.5.3.rpm'
-
-
 class TestAzure440(AzureTestBase):
 
     @property
     def cloudify_rpm_url(self):
-        return 'http://repository.cloudifysource.org/cloudify/' \
-               '4.4.0/rc2-release/' \
-               'cloudify-manager-install-4.4rc2.rpm'
+        return 'http://repository.cloudifysource.org/cloudify/4.4.0/' \
+               'ga-release/cloudify-manager-install-4.4ga.rpm'
