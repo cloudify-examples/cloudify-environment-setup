@@ -28,6 +28,14 @@ def update_config(private, public, _config_path):
 
     SED = "sed -i 's|{0}|{1}|g' {2}"
 
+    old_monitoring = "    skip_installation: true"
+    new_monitoring = "    skip_installation: false"
+
+    try:
+        sudo(SED.format(old_monitoring, new_monitoring, _config_path))
+    except Exception as e:
+        raise NonRecoverableError(str(e))
+
     old_sanity = "  skip_sanity: false"
     new_sanity = "  skip_sanity: true"
 
