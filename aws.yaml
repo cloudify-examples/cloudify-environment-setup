@@ -321,7 +321,7 @@ node_templates:
             - CidrIp: 0.0.0.0/0
           - IpProtocol: tcp
             FromPort: 5671
-            ToPort: 5671
+            ToPort: 5672
             IpRanges:
             - CidrIp: 0.0.0.0/0
           - IpProtocol: tcp

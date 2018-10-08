@@ -213,7 +213,7 @@ node_templates:
         - { get_property: [ network_subnet0, subnet ] }
         - { get_property: [ network_subnet1, subnet ] }
       allowed:
-        tcp: [5671, 8101, 53333, 8300, 8301, 8500, 22000, 15432]
+        tcp: [5671, 5672, 8101, 53333, 8300, 8301, 8500, 22000, 15432]
     relationships:
       - type: cloudify.relationships.connected_to
         target: network
