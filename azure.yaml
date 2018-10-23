@@ -305,22 +305,6 @@ node_templates:
     - type: cloudify.azure.relationships.contained_in_virtual_network
       target: virtual_network
 
-  subnet1:
-    type: cloudify.azure.nodes.network.Subnet
-    properties:
-      azure_config: *client_config
-      api_version: { get_input: network_api_version }
-      name: { concat: [ { get_input: resource_prefix }, 's1', { get_input: resource_suffix } ] }
-      location: { get_input: location }
-      retry_after: { get_input: retry_after }
-      resource_config:
-        addressPrefix: 10.10.1.0/24
-    relationships:
-    - type: cloudify.azure.relationships.contained_in_virtual_network
-      target: virtual_network
-    - type: cloudify.relationships.depends_on
-      target: subnet0
-
   subnet0_nic_ip_configuration:
     type: cloudify.azure.nodes.network.IPConfiguration
     properties:
@@ -339,22 +323,6 @@ node_templates:
       - type: cloudify.azure.relationships.ip_configuration_connected_to_public_ip
         target: subnet0_nic_ip
 
-  subnet1_nic_ip_configuration:
-    type: cloudify.azure.nodes.network.IPConfiguration
-    properties:
-      azure_config: *client_config
-      api_version: { get_input: network_api_version }
-      name: { concat: [ { get_input: resource_prefix }, 's1ipc', { get_input: resource_suffix } ] }
-      location: { get_input: location }
-      retry_after: { get_input: retry_after }
-      resource_config:
-        privateIPAllocationMethod: Dynamic
-    relationships:
-      - type: cloudify.azure.relationships.contained_in_resource_group
-        target: resource_group
-      - type: cloudify.azure.relationships.ip_configuration_connected_to_subnet
-        target: subnet1
-
   subnet0_nic:
     type: cloudify.azure.nodes.network.NetworkInterfaceCard
     properties:
@@ -367,23 +335,6 @@ node_templates:
     relationships:
       - type: cloudify.azure.relationships.nic_connected_to_ip_configuration
         target: subnet0_nic_ip_configuration
-      - type: cloudify.azure.relationships.contained_in_resource_group
-        target: resource_group
-      - type: cloudify.azure.relationships.nic_connected_to_network_security_group
-        target: security_group
-
-  subnet1_nic:
-    type: cloudify.azure.nodes.network.NetworkInterfaceCard
-    properties:
-      azure_config: *client_config
-      api_version: { get_input: network_api_version }
-      name: { concat: [ { get_input: resource_prefix }, 's1nic', { get_input: resource_suffix } ] }
-      location: { get_input: location }
-      retry_after: { get_input: retry_after }
-      primary: false
-    relationships:
-      - type: cloudify.azure.relationships.nic_connected_to_ip_configuration
-        target: subnet1_nic_ip_configuration
       - type: cloudify.azure.relationships.contained_in_resource_group
         target: resource_group
       - type: cloudify.azure.relationships.nic_connected_to_network_security_group
@@ -438,8 +389,6 @@ node_templates:
         target: storage_account
       - type: cloudify.azure.relationships.connected_to_nic
         target: subnet0_nic
-      - type: cloudify.azure.relationships.connected_to_nic
-        target: subnet1_nic
 
 outputs:
 
