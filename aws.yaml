@@ -2,7 +2,7 @@ tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
   - https://cloudify.co/spec/cloudify/4.5/types.yaml
-  - https://cloudify.co/spec/awssdk-plugin/2.6.0/plugin.yaml
+  - https://cloudify.co/spec/awssdk-plugin/2.7.0/plugin.yaml
   - https://cloudify.co/spec/utilities-plugin/1.9.5/plugin.yaml
   - https://cloudify.co/spec/fabric-plugin/1.5.1/plugin.yaml
   - imports/manager-configuration.yaml
@@ -95,6 +95,11 @@ inputs:
   private_subnet_cidr:
     default: 10.10.5.0/24
 
+  resource_name:
+    type: string
+    description: This will be the "Name" tag on your resource.
+    default: "Cloudify"
+
 dsl_definitions:
 
   client_config: &client_config
@@ -164,6 +169,24 @@ node_templates:
           inputs:
             store_private_key_material: true
 
+  cloudify_host_cloud_config:
+    type: cloudify.nodes.CloudInit.CloudConfig
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          inputs:
+            resource_config:
+              users:
+              - name: { get_input: cloudify_image_username }
+                primary-group: wheel
+                shell: /bin/bash
+                sudo: ['ALL=(ALL) NOPASSWD:ALL']
+                ssh-authorized-keys:
+                - { get_attribute: [ manager_key, public_key_export ] }
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: manager_key
+
   vpc:
     type: cloudify.nodes.aws.ec2.Vpc
     properties:
@@ -171,7 +194,11 @@ node_templates:
         kwargs:
           CidrBlock: { get_input: vpc_cidr }
       client_config: *client_config
-
+      Tags:
+      - Key: Name
+        Value: { concat: [ { get_input: resource_name }, _vpc ] }
+      - Key: Blueprint
+        Value: cloudify-environment-setup
   internet_gateway:
     type: cloudify.nodes.aws.ec2.InternetGateway
     properties:
@@ -188,6 +215,11 @@ node_templates:
           CidrBlock: { get_input: public_subnet_cidr }
           AvailabilityZone: { get_input: availability_zone }
       client_config: *client_config
+      Tags:
+      - Key: Name
+        Value: { concat: [ { get_input: resource_name }, _public_subnet ] }
+      - Key: Blueprint
+        Value: cloudify-environment-setup
     relationships:
     - type: cloudify.relationships.depends_on
       target: vpc
@@ -202,6 +234,11 @@ node_templates:
           CidrBlock: { get_input: private_subnet_cidr }
           AvailabilityZone: { get_input: availability_zone }
       client_config: *client_config
+      Tags:
+      - Key: Name
+        Value: { concat: [ { get_input: resource_name }, _private_subnet ] }
+      - Key: Blueprint
+        Value: cloudify-environment-setup
     relationships:
     - type: cloudify.relationships.depends_on
       target: vpc
@@ -212,6 +249,11 @@ node_templates:
     type: cloudify.nodes.aws.ec2.RouteTable
     properties:
       client_config: *client_config
+      Tags:
+      - Key: Name
+        Value: { concat: [ { get_input: resource_name }, _public_subnet_routetable ] }
+      - Key: Blueprint
+        Value: cloudify-environment-setup
     relationships:
     - type: cloudify.relationships.contained_in
       target: vpc
@@ -222,6 +264,11 @@ node_templates:
     type: cloudify.nodes.aws.ec2.RouteTable
     properties:
       client_config: *client_config
+      Tags:
+      - Key: Name
+        Value: { concat: [ { get_input: resource_name }, _private_subnet_routetable ] }
+      - Key: Blueprint
+        Value: cloudify-environment-setup
     relationships:
     - type: cloudify.relationships.contained_in
       target: vpc
@@ -259,6 +306,11 @@ node_templates:
     type: cloudify.nodes.aws.ec2.NATGateway
     properties:
       client_config: *client_config
+      Tags:
+      - Key: Name
+        Value: { concat: [ { get_input: resource_name }, _nat_gateway ] }
+      - Key: Blueprint
+        Value: cloudify-environment-setup
     relationships:
     - type: cloudify.relationships.depends_on
       target: public_subnet
@@ -372,6 +424,11 @@ node_templates:
           Description: Created by simple-infrastructure-blueprint aws.yaml.
           VpcId: { get_attribute: [ vpc, aws_resource_id] }
       client_config: *client_config
+      Tags:
+      - Key: Name
+        Value: { concat: [ { get_input: resource_name }, _sec_group ] }
+      - Key: Blueprint
+        Value: cloudify-environment-setup
     relationships:
     - type: cloudify.relationships.depends_on
       target: vpc
@@ -380,24 +437,6 @@ node_templates:
         configure:
           inputs:
             resource_config: { get_property: [ SELF, resource_config, kwargs] }
-
-  cloudify_host_cloud_config:
-    type: cloudify.nodes.CloudInit.CloudConfig
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        create:
-          inputs:
-            resource_config:
-              users:
-              - name: { get_input: cloudify_image_username }
-                primary-group: wheel
-                shell: /bin/bash
-                sudo: ['ALL=(ALL) NOPASSWD:ALL']
-                ssh-authorized-keys:
-                - { get_attribute: [ manager_key, public_key_export ] }
-    relationships:
-      - type: cloudify.relationships.depends_on
-        target: manager_key
 
   nic:
     type: cloudify.nodes.aws.ec2.Interface
@@ -409,6 +448,11 @@ node_templates:
           SubnetId: { get_attribute: [ public_subnet, aws_resource_id] }
           Groups:
           - { get_attribute: [ security_group, aws_resource_id ] }
+      Tags:
+      - Key: Name
+        Value: { concat: [ { get_input: resource_name }, _nic ] }
+      - Key: Blueprint
+        Value: cloudify-environment-setup
     relationships:
     - type: cloudify.relationships.depends_on
       target: public_subnet
@@ -436,6 +480,11 @@ node_templates:
             - Key: Name
               Value: Cloudify Volume
       client_config: *client_config
+      Tags:
+      - Key: Name
+        Value: { concat: [ { get_input: resource_name }, _cloudify_host_volume ] }
+      - Key: Blueprint
+        Value: cloudify-environment-setup
 
   cloudify_host:
     type: cloudify.nodes.aws.ec2.Instances
@@ -456,6 +505,11 @@ node_templates:
             AvailabilityZone: { get_input: availability_zone }
           UserData: { get_attribute: [ cloudify_host_cloud_config, cloud_config ] }
       client_config: *client_config
+      Tags:
+      - Key: Name
+        Value: { concat: [ { get_input: resource_name }, _cloudify_host ] }
+      - Key: Blueprint
+        Value: cloudify-environment-setup
     relationships:
       - type: cloudify.relationships.depends_on
         target: cloudify_host_cloud_config
