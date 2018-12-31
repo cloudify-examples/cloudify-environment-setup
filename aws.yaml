@@ -168,8 +168,7 @@ node_templates:
     type: cloudify.nodes.aws.ec2.Vpc
     properties:
       resource_config:
-        kwargs:
-          CidrBlock: { get_input: vpc_cidr }
+        CidrBlock: { get_input: vpc_cidr }
       client_config: *client_config
 
   internet_gateway:
@@ -184,9 +183,8 @@ node_templates:
     type: cloudify.nodes.aws.ec2.Subnet
     properties:
       resource_config:
-        kwargs:
-          CidrBlock: { get_input: public_subnet_cidr }
-          AvailabilityZone: { get_input: availability_zone }
+        CidrBlock: { get_input: public_subnet_cidr }
+        AvailabilityZone: { get_input: availability_zone }
       client_config: *client_config
     relationships:
     - type: cloudify.relationships.depends_on
@@ -198,9 +196,8 @@ node_templates:
     type: cloudify.nodes.aws.ec2.Subnet
     properties:
       resource_config:
-        kwargs:
-          CidrBlock: { get_input: private_subnet_cidr }
-          AvailabilityZone: { get_input: availability_zone }
+        CidrBlock: { get_input: private_subnet_cidr }
+        AvailabilityZone: { get_input: availability_zone }
       client_config: *client_config
     relationships:
     - type: cloudify.relationships.depends_on
@@ -248,8 +245,7 @@ node_templates:
     type: cloudify.nodes.aws.ec2.ElasticIP
     properties:
       resource_config:
-        kwargs:
-          Domain: 'vpc'
+        Domain: 'vpc'
       client_config: *client_config
     interfaces:
       cloudify.interfaces.lifecycle:
@@ -285,8 +281,7 @@ node_templates:
     type: cloudify.nodes.aws.ec2.ElasticIP
     properties:
       resource_config:
-        kwargs:
-          Domain: 'vpc'
+        Domain: 'vpc'
       client_config: *client_config
     relationships:
     - type: cloudify.relationships.depends_on
@@ -297,68 +292,67 @@ node_templates:
     properties:
       client_config: *client_config
       resource_config:
-        kwargs:
-          IpPermissions:
-          - IpProtocol: icmp
-            FromPort: -1
-            ToPort: -1
-            IpRanges:
-            - CidrIp: 0.0.0.0/0
-          - IpProtocol: tcp
-            FromPort: 22
-            ToPort: 22
-            IpRanges:
-            - CidrIp: 0.0.0.0/0
-          - IpProtocol: tcp
-            FromPort: 80
-            ToPort: 80
-            IpRanges:
-            - CidrIp: 0.0.0.0/0
-          - IpProtocol: tcp
-            FromPort: 443
-            ToPort: 443
-            IpRanges:
-            - CidrIp: 0.0.0.0/0
-          - IpProtocol: tcp
-            FromPort: 5671
-            ToPort: 5672
-            IpRanges:
-            - CidrIp: 0.0.0.0/0
-          - IpProtocol: tcp
-            FromPort: 8101
-            ToPort: 8101
-            IpRanges:
-            - CidrIp: 0.0.0.0/0
-          - IpProtocol: tcp
-            FromPort: 53333
-            ToPort: 53333
-            IpRanges:
-            - CidrIp: 0.0.0.0/0
-          - IpProtocol: tcp
-            FromPort: 8300
-            ToPort: 8300
-            IpRanges:
-            - CidrIp: 0.0.0.0/0
-          - IpProtocol: tcp
-            FromPort: 8301
-            ToPort: 8301
-            IpRanges:
-            - CidrIp: 0.0.0.0/0
-          - IpProtocol: tcp
-            FromPort: 8500
-            ToPort: 8500
-            IpRanges:
-            - CidrIp: 0.0.0.0/0
-          - IpProtocol: tcp
-            FromPort: 22000
-            ToPort: 22000
-            IpRanges:
-            - CidrIp: 0.0.0.0/0
-          - IpProtocol: tcp
-            FromPort: 15432
-            ToPort: 15432
-            IpRanges:
-            - CidrIp: 0.0.0.0/0
+        IpPermissions:
+        - IpProtocol: icmp
+          FromPort: -1
+          ToPort: -1
+          IpRanges:
+          - CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          IpRanges:
+          - CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          IpRanges:
+          - CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          IpRanges:
+          - CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 5671
+          ToPort: 5672
+          IpRanges:
+          - CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 8101
+          ToPort: 8101
+          IpRanges:
+          - CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 53333
+          ToPort: 53333
+          IpRanges:
+          - CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 8300
+          ToPort: 8300
+          IpRanges:
+          - CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 8301
+          ToPort: 8301
+          IpRanges:
+          - CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 8500
+          ToPort: 8500
+          IpRanges:
+          - CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22000
+          ToPort: 22000
+          IpRanges:
+          - CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 15432
+          ToPort: 15432
+          IpRanges:
+          - CidrIp: 0.0.0.0/0
     relationships:
     - type: cloudify.relationships.contained_in
       target: security_group
@@ -367,9 +361,9 @@ node_templates:
     type: cloudify.nodes.aws.ec2.SecurityGroup
     properties:
       resource_config:
+        GroupName: CloudifyGroup
+        Description: Created by simple-infrastructure-blueprint aws.yaml.
         kwargs:
-          GroupName: CloudifyGroup
-          Description: Created by simple-infrastructure-blueprint aws.yaml.
           VpcId: { get_attribute: [ vpc, aws_resource_id] }
       client_config: *client_config
     relationships:
@@ -426,9 +420,9 @@ node_templates:
     type: cloudify.nodes.aws.ec2.EBSVolume
     properties:
       resource_config:
+        AvailabilityZone: { get_input: availability_zone }
+        Size: 16
         kwargs:
-          AvailabilityZone: { get_input: availability_zone }
-          Size: 16
           VolumeType: gp2
           TagSpecifications:
           - ResourceType: volume
@@ -443,11 +437,11 @@ node_templates:
       agent_config:
         install_method: none
       resource_config:
+        MinCount: 1
+        MaxCount: 1
+        ImageId: { get_input: ami }
+        InstanceType: { get_input: instance_type }
         kwargs:
-          MinCount: 1
-          MaxCount: 1
-          ImageId: { get_input: ami }
-          InstanceType: { get_input: instance_type }
           BlockDeviceMappings:
           - DeviceName: '/dev/sda1'
             Ebs:
