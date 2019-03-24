@@ -67,6 +67,8 @@ inputs:
         value: { get_input: aws_secret_access_key }
       - key: ec2_region_name
         value: { get_input: ec2_region_name }
+      - key: aws_region_name
+        value: { get_input: ec2_region_name }
       - key: ec2_region_endpoint
         value: { get_input: ec2_region_endpoint }
       - key: vpc_id
@@ -76,6 +78,8 @@ inputs:
       - key: private_subnet_id
         value: { get_attribute: [ private_subnet, aws_resource_id ] }
       - key: availability_zone
+        value: { get_input: availability_zone }
+      - key: aws_availability_zone
         value: { get_input: availability_zone }
       - key: ubuntu_trusty_image
         value: { get_attribute: [ ubuntu_trusty_ami, aws_resource_id ] }
