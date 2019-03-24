@@ -11,18 +11,18 @@ inputs:
 
   blueprints:
     default:
-    - file: update-blueprint.yaml
+    - file: blueprint.yaml
       name: aws-example-network
-      url: https://github.com/cloudify-examples/aws-example-network/archive/4.3.zip
-    - file: simple-blueprint.yaml
+      url: https://github.com/cloudify-community/blueprint-examples/releases/download/4.5.0/aws-example-network.zip
+    - file: blueprint.yaml
       name: openstack-example-network
-      url: https://github.com/cloudify-examples/openstack-example-network/archive/4.3.zip
-    - file: simple-blueprint.yaml
+      url: https://github.com/cloudify-community/blueprint-examples/releases/download/4.5.0/openstack-example-network.zip
+    - file: blueprint.yaml
       name: azure-example-network
-      url: https://github.com/cloudify-examples/azure-example-network/archive/4.3.zip
-    - file: simple-blueprint.yaml
+      url: https://github.com/cloudify-community/blueprint-examples/releases/download/4.5.0/azure-example-network.zip
+    - file: blueprint.yaml
       name: gcp-example-network
-      url: https://github.com/cloudify-examples/gcp-example-network/archive/4.3.zip
+      url: https://github.com/cloudify-community/blueprint-examples/releases/download/4.5.0/gcp-example-network.zip
 
 node_types:
 
